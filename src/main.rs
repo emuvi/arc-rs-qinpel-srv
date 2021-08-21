@@ -1,7 +1,7 @@
 use actix_files as fs;
 use actix_web::{get, App, HttpResponse, HttpServer, Responder};
 
-fn init_run_folder() {
+fn init_server() {
     println!("init run folder..........");
 }
 
@@ -12,9 +12,9 @@ async fn index() -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    println!("Qinpel Server booting...");
-    init_run_folder();
-    println!("Qinpel Server starting...");
+    println!("QinpelSrv booting...");
+    init_server();
+    println!("QinpelSrv starting...");
     HttpServer::new(|| {
         App::new()
             .service(index)
