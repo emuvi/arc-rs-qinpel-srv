@@ -1,10 +1,10 @@
 use clap::{App, Arg, ArgMatches};
 
-pub fn run<'a>() -> ArgMatches<'a> {
+pub fn parse<'a>() -> ArgMatches<'a> {
   App::new("QinpelSrv")
     .version(clap::crate_version!())
     .author("Éverton M. Vieira <everton.muvi@gmail.com>")
-    .about("QinpelSrv - QinpelSrv - WebServer for Qinpel")
+    .about("QinpelSrv - WebServer for Qinpel")
     .arg(
       Arg::with_name("host")
         .short("h")

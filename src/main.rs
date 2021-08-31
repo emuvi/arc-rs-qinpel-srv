@@ -66,7 +66,7 @@ async fn run(args: ArgMatches<'_>) -> std::io::Result<()> {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-	let clip = clip::run();
+	let clip = clip::parse();
 	if clip.is_present("run") {
 		return run(clip).await;
 	}
