@@ -3,13 +3,18 @@ use actix_web::error::{Error, ErrorForbidden};
 use actix_web::{get, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
-use serde_json::Value;
 use std::fs;
 use std::path::Path;
+use clap::ArgMatches;
+
+mod clip;
+mod setup;
 
 #[get("/")]
 async fn index() -> impl Responder {
-	HttpResponse::Ok().body("QinpelSrv is running on version: v0.1.0")
+	let mut body = String::from("QinpelSrv is running on version: ");
+	body.push_str(clap::crate_version!());
+	HttpResponse::Ok().body(body)
 }
 
 fn read_token() -> String {
@@ -43,36 +48,29 @@ async fn reboot(req: HttpRequest) -> Result<impl Responder, Error> {
 	}
 }
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-	println!("QinpelSrv starting...");
-	let path = Path::new("setup.json");
-	let mut setup = Value::Null;
-	if path.exists() {
-		let file = std::fs::File::open(path).unwrap();
-		setup = serde_json::from_reader(file).unwrap();
-	}
-	let host = if setup == Value::Null {
-		String::from("0.0.0.0")
-	} else {
-		format!("{}", setup["serverHost"].as_str().unwrap())
-	};
-	let port = if setup == Value::Null {
-		String::from("5490")
-	} else {
-		format!("{}", setup["serverPort"])
-	};
-	println!("Server host: {}", host);
-	println!("Server port: {}", port);
+async fn run(args: ArgMatches<'_>) -> std::io::Result<()> {
+	println!("QinpelSrv running...");
+	let setup = setup::Head::load(args);
+	println!("Server host: {}", setup.host);
+	println!("Server port: {}", setup.port);
 	HttpServer::new(|| {
 		App::new()
 			.service(index)
 			.service(reboot)
 			.service(actix_fs::Files::new("/apps", "./run/apps").index_file("index.html"))
 	})
-	.bind(format!("{}:{}", host, port))?
+	.bind(format!("{}:{}", setup.host, setup.port))?
 	.run()
 	.await
+}
+
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+	let clip = clip::run();
+	if clip.is_present("run") {
+		return run(clip).await;
+	}
+	Ok(())
 }
 
 fn reboot_server() {
