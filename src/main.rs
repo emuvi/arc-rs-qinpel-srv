@@ -5,7 +5,6 @@ use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use std::fs;
 use std::path::Path;
-use clap::ArgMatches;
 
 mod clip;
 mod setup;
@@ -48,7 +47,12 @@ async fn reboot(req: HttpRequest) -> Result<impl Responder, Error> {
 	}
 }
 
-async fn run(args: ArgMatches<'_>) -> std::io::Result<()> {
+#[actix_web::main]
+async fn main() -> std::io::Result<()> {
+	let args = clip::parse();
+	if args.is_present("no-run") {
+		std::process::exit(0);
+	}
 	println!("QinpelSrv running...");
 	let setup = setup::Head::load(args);
 	println!("Server host: {}", setup.host);
@@ -59,18 +63,10 @@ async fn run(args: ArgMatches<'_>) -> std::io::Result<()> {
 			.service(reboot)
 			.service(actix_fs::Files::new("/apps", "./run/apps").index_file("index.html"))
 	})
+	// TODO - This causes undefined behavior on windows if is called on the same address more than one time.
 	.bind(format!("{}:{}", setup.host, setup.port))?
 	.run()
 	.await
-}
-
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-	let clip = clip::parse();
-	if clip.is_present("run") {
-		return run(clip).await;
-	}
-	Ok(())
 }
 
 fn reboot_server() {

@@ -12,7 +12,7 @@ pub fn parse<'a>() -> ArgMatches<'a> {
         .value_name("ADDRESS")
         .takes_value(true)
         .required(false)
-        .help("What app or cmd should I install?"),
+        .help("On what host should I serve?"),
     )
     .arg(
       Arg::with_name("port")
@@ -21,15 +21,15 @@ pub fn parse<'a>() -> ArgMatches<'a> {
         .value_name("NUMBER")
         .takes_value(true)
         .required(false)
-        .help("How long should I wait before to execute?"),
+        .help("On what port should I serve?"),
     )
     .arg(
-      Arg::with_name("run")
-        .short("r")
-        .long("run")
+      Arg::with_name("no-run")
+        .short("nr")
+        .long("no-run")
         .takes_value(false)
         .required(false)
-        .help("What app or cmd should I install?"),
+        .help("Should I exit without serving?"),
     )
     .get_matches()
 }
