@@ -61,7 +61,7 @@ async fn main() -> std::io::Result<()> {
 		App::new()
 			.service(index)
 			.service(reboot)
-			.service(actix_fs::Files::new("/apps", "./run/apps").index_file("index.html"))
+			.service(actix_fs::Files::new("/run/apps", "./run/apps").index_file("index.html"))
 	})
 	// TODO - This causes undefined behavior on windows if is called on the same address more than one time.
 	.bind(format!("{}:{}", setup.host, setup.port))?
