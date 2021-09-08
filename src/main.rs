@@ -33,6 +33,9 @@ fn read_token() -> String {
 
 #[get("/reboot")]
 async fn reboot(req: HttpRequest) -> Result<impl Responder, Error> {
+	if let Some(origin) = req.headers().get("ORIGIN") {
+		println!("{}", origin.to_str().unwrap());	
+	}
 	if let Some(token) = req.headers().get("token") {
 		let our_token = read_token();
 		let given_token = token.to_str().unwrap();
