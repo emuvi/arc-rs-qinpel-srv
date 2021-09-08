@@ -1,53 +1,83 @@
 use actix_files as actix_fs;
 use actix_web::error::{Error, ErrorForbidden};
-use actix_web::{get, App, HttpRequest, HttpResponse, HttpServer, Responder};
+use actix_web::{get, App, HttpRequest, HttpServer, Responder};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use std::fs;
 use std::path::Path;
+use std::time::Duration;
 
 mod clip;
 mod setup;
 
-#[get("/")]
-async fn index() -> impl Responder {
-	let mut body = String::from("QinpelSrv is running on version: ");
-	body.push_str(clap::crate_version!());
-	HttpResponse::Ok().body(body)
+static SLEEP_TO_SHUTDOWN: Duration = Duration::from_millis(1000);
+
+fn is_origin_local(req: &HttpRequest) -> bool {
+	let info = req.connection_info();
+	let host = info.host();
+	host.starts_with("127.0.0.1") || host.starts_with("localhost")
 }
 
-fn read_token() -> String {
+fn read_master_token() -> String {
 	let path = Path::new("token.txt");
 	if path.exists() {
-		fs::read_to_string("token.txt").unwrap()
+		return fs::read_to_string("token.txt").expect("Error: Could not read the token file.");
 	} else {
 		let new_token: String = thread_rng()
 			.sample_iter(&Alphanumeric)
-			.take(27)
+			.take(18)
 			.map(char::from)
 			.collect();
-		fs::write(path, &new_token).unwrap();
-		new_token
+		fs::write(path, &new_token).expect("Error: Could not write the token file.");
+		return new_token;
 	}
 }
 
-#[get("/reboot")]
-async fn reboot(req: HttpRequest) -> Result<impl Responder, Error> {
-	if let Some(origin) = req.headers().get("ORIGIN") {
-		println!("{}", origin.to_str().unwrap());	
-	}
+fn check_master_token(req: &HttpRequest) -> bool {
 	if let Some(token) = req.headers().get("token") {
-		let our_token = read_token();
+		let our_token = read_master_token();
 		let given_token = token.to_str().unwrap();
 		if our_token == given_token {
-			reboot_server();
-			return Ok("QinpelSrv is rebooting...".to_owned());
-		} else {
-			return Err(ErrorForbidden("You must inform the correct token."));
+			return true;
 		}
-	} else {
-		return Err(ErrorForbidden("You must inform the token."));
 	}
+	return false;
+}
+
+fn check_access(req: &HttpRequest) -> bool {
+	is_origin_local(req) || check_master_token(req)
+}
+
+#[get("/")]
+async fn index(req: HttpRequest) -> Result<impl Responder, Error> {
+	if !check_access(&req) {
+		return Err(ErrorForbidden(
+			"You don't have access to call this resource.",
+		));
+	}
+	call_index()
+}
+
+#[get("/ping")]
+async fn ping() -> impl Responder {
+	"QinpelSrv pong..."
+}
+
+#[get("/version")]
+async fn version() -> impl Responder {
+	let mut body = String::from("QinpelSrv is running on version: ");
+	body.push_str(clap::crate_version!());
+	body
+}
+
+#[get("/shutdown")]
+async fn shutdown(req: HttpRequest) -> Result<impl Responder, Error> {
+	if !check_access(&req) {
+		return Err(ErrorForbidden(
+			"You don't have access to call this resource.",
+		));
+	}
+	call_shutdown()
 }
 
 #[actix_web::main]
@@ -63,15 +93,40 @@ async fn main() -> std::io::Result<()> {
 	HttpServer::new(|| {
 		App::new()
 			.service(index)
-			.service(reboot)
+			.service(ping)
+			.service(version)
+			.service(shutdown)
 			.service(actix_fs::Files::new("/run/apps", "./run/apps").index_file("index.html"))
 	})
-	// TODO - This causes undefined behavior on windows if is called on the same address more than one time.
 	.bind(format!("{}:{}", setup.host, setup.port))?
 	.run()
 	.await
 }
 
-fn reboot_server() {
-	println!("Rebooting the server...");
+fn call_index() -> Result<impl Responder, Error> {
+	let mut body = String::from("QinpelSrv is serving:\n");
+	for entry in Path::new("./run/apps").read_dir()? {
+		if let Ok(entry) = entry {
+			let path = entry.path();
+			if path.is_dir() {
+				if let Some(name) = path.file_name() {
+					if let Some(name) = name.to_str() {
+						body.push_str(name);
+						body.push_str("\n");
+					}
+				}
+			}
+		}
+	}
+	Ok(body)
+}
+
+fn call_shutdown() -> Result<impl Responder, Error> {
+	let result = String::from("QinpelSrv is shutdown...");
+	println!("{}", result);
+	std::thread::spawn(|| {
+		std::thread::sleep(SLEEP_TO_SHUTDOWN);
+		std::process::exit(0);
+	});
+	Ok(result)
 }
