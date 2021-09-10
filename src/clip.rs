@@ -25,7 +25,7 @@ pub fn parse<'a>() -> ArgMatches<'a> {
     )
     .arg(
       Arg::with_name("no-run")
-        .short("nr")
+        .short("x")
         .long("no-run")
         .takes_value(false)
         .required(false)

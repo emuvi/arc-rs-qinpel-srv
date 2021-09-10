@@ -1,60 +1,20 @@
 use actix_files as actix_fs;
 use actix_web::error::{Error, ErrorForbidden};
-use actix_web::{get, App, HttpRequest, HttpServer, Responder};
-use rand::distributions::Alphanumeric;
-use rand::{thread_rng, Rng};
-use std::fs;
+use actix_web::{get, web, App, HttpRequest, HttpServer, Responder};
+
 use std::path::Path;
+use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
 mod clip;
+mod data;
+mod guard;
 mod setup;
 
 static SLEEP_TO_SHUTDOWN: Duration = Duration::from_millis(1000);
 
-fn is_origin_local(req: &HttpRequest) -> bool {
-	let info = req.connection_info();
-	let host = info.host();
-	host.starts_with("127.0.0.1") || host.starts_with("localhost")
-}
-
-fn read_master_token() -> String {
-	let path = Path::new("token.txt");
-	if path.exists() {
-		return fs::read_to_string("token.txt").expect("Error: Could not read the token file.");
-	} else {
-		let new_token: String = thread_rng()
-			.sample_iter(&Alphanumeric)
-			.take(18)
-			.map(char::from)
-			.collect();
-		fs::write(path, &new_token).expect("Error: Could not write the token file.");
-		return new_token;
-	}
-}
-
-fn check_master_token(req: &HttpRequest) -> bool {
-	if let Some(token) = req.headers().get("token") {
-		let our_token = read_master_token();
-		let given_token = token.to_str().unwrap();
-		if our_token == given_token {
-			return true;
-		}
-	}
-	return false;
-}
-
-fn check_access(req: &HttpRequest) -> bool {
-	is_origin_local(req) || check_master_token(req)
-}
-
-#[get("/")]
-async fn index(req: HttpRequest) -> Result<impl Responder, Error> {
-	if !check_access(&req) {
-		return Err(ErrorForbidden(
-			"You don't have access to call this resource.",
-		));
-	}
+#[get("/index")]
+async fn index() -> Result<impl Responder, Error> {
 	call_index()
 }
 
@@ -71,8 +31,11 @@ async fn version() -> impl Responder {
 }
 
 #[get("/shutdown")]
-async fn shutdown(req: HttpRequest) -> Result<impl Responder, Error> {
-	if !check_access(&req) {
+async fn shutdown(
+	req: HttpRequest,
+	srv_data: web::Data<Arc<RwLock<data::Body>>>,
+) -> Result<impl Responder, Error> {
+	if !guard::check_access(&req, &srv_data) {
 		return Err(ErrorForbidden(
 			"You don't have access to call this resource.",
 		));
@@ -88,23 +51,25 @@ async fn main() -> std::io::Result<()> {
 	}
 	println!("QinpelSrv running...");
 	let setup = setup::Head::load(args);
-	println!("Server host: {}", setup.host);
-	println!("Server port: {}", setup.port);
-	HttpServer::new(|| {
+	let server_address = format!("{}:{}", setup.host, setup.port);
+	println!("Server address: {}", server_address);
+	let data = Arc::new(RwLock::new(data::Body::new(setup)));
+	HttpServer::new(move || {
 		App::new()
+			.data(data.clone())
 			.service(index)
 			.service(ping)
 			.service(version)
 			.service(shutdown)
-			.service(actix_fs::Files::new("/run/apps", "./run/apps").index_file("index.html"))
+			.service(actix_fs::Files::new("/run/apps", "./run/apps"))
 	})
-	.bind(format!("{}:{}", setup.host, setup.port))?
+	.bind(server_address)?
 	.run()
 	.await
 }
 
 fn call_index() -> Result<impl Responder, Error> {
-	let mut body = String::from("QinpelSrv is serving:\n");
+	let mut body = String::from("QinpelSrv apps:\n");
 	for entry in Path::new("./run/apps").read_dir()? {
 		if let Ok(entry) = entry {
 			let path = entry.path();
