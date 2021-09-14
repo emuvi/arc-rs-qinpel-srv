@@ -28,12 +28,21 @@ pub fn check_master_token(
 	req: &HttpRequest,
 	srv_data: &web::Data<Arc<RwLock<data::Body>>>,
 ) -> bool {
-	if let Some(token) = req.headers().get("token") {
-		let given_token = token.to_str().unwrap();
+	let given_token = get_qinpel_token(req);
+	if !given_token.is_empty() {
 		let our_token = &srv_data.read().unwrap().master_token;
-		if our_token == given_token {
+		if *our_token == given_token {
 			return true;
 		}
 	}
 	return false;
+}
+
+pub fn get_qinpel_token(req: &HttpRequest) -> String {
+	if let Some(token) = req.headers().get("QinpelToken") {
+		if let Ok(token) = token.to_str() {
+			return String::from(token);
+		}
+	}
+	String::new()
 }

@@ -1,3 +1,4 @@
+use actix_files::NamedFile;
 use actix_files as actix_fs;
 use actix_web::error::{Error};
 use actix_web::{get, post, web, web::Bytes, HttpRequest, Responder};
@@ -26,6 +27,11 @@ pub async fn shutdown(
 ) -> Result<impl Responder, Error> {
     guard::check_access(&req, &srv_data)?;
     call::shutdown()
+}
+
+#[get("/favicon.ico")]
+pub async fn favicon() -> Result<NamedFile, Error> {
+    Ok(NamedFile::open("./favicon.ico")?)
 }
 
 #[get("/list/apps")]

@@ -27,6 +27,7 @@ async fn main() -> std::io::Result<()> {
 			.service(serve::ping)
 			.service(serve::version)
 			.service(serve::shutdown)
+			.service(serve::favicon)
 			.service(serve::list_apps)
 			.service(serve::run_apps())
 			.service(serve::list_cmds)
