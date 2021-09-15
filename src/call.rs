@@ -40,11 +40,11 @@ fn list_folder(folder: PathBuf) -> Result<impl Responder, Error> {
 	Ok(body)
 }
 
-pub fn list_apps() -> Result<impl Responder, Error> {
-    list_folder(Path::new("./run/apps").to_owned())
+pub fn list_app() -> Result<impl Responder, Error> {
+    list_folder(Path::new("./run/app").to_owned())
 }
 
-pub fn list_cmds() -> Result<impl Responder, Error> {
-	list_folder(Path::new("./run/cmds").to_owned())
+pub fn list_cmd() -> Result<impl Responder, Error> {
+	list_folder(Path::new("./run/cmd").to_owned())
 }
 

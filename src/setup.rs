@@ -5,6 +5,7 @@ use std::path::Path;
 static DEFAULT_HOST: &str = "127.0.0.1";
 static DEFAULT_PORT: u64 = 5490;
 
+#[derive(Debug)]
 pub struct Head {
     pub host: String,
     pub port: u64,

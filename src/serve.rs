@@ -1,32 +1,15 @@
 use actix_files::NamedFile;
-use actix_files as actix_fs;
-use actix_web::error::{Error};
-use actix_web::{get, post, web, web::Bytes, HttpRequest, Responder};
-
-use std::sync::{Arc, RwLock};
+use actix_web::error::Error;
+use actix_web::{get, post, web::Bytes, HttpRequest, Responder};
 
 use super::call;
-use super::data;
 use super::guard;
 use super::utils;
+use super::SrvData;
 
 #[get("/ping")]
 pub async fn ping() -> impl Responder {
     "QinpelSrv pong."
-}
-
-#[get("/version")]
-async fn version() -> impl Responder {
-    format!("{}{}", "QinpelSrv version: ", clap::crate_version!())
-}
-
-#[get("/shutdown")]
-pub async fn shutdown(
-    req: HttpRequest,
-    srv_data: web::Data<Arc<RwLock<data::Body>>>,
-) -> Result<impl Responder, Error> {
-    guard::check_access(&req, &srv_data)?;
-    call::shutdown()
 }
 
 #[get("/favicon.ico")]
@@ -34,31 +17,60 @@ pub async fn favicon() -> Result<NamedFile, Error> {
     Ok(NamedFile::open("./favicon.ico")?)
 }
 
-#[get("/list/apps")]
-pub async fn list_apps() -> Result<impl Responder, Error> {
-    call::list_apps()
+#[get("/version")]
+async fn version() -> impl Responder {
+    format!("{}{}", "QinpelSrv version: ", clap::crate_version!())
 }
 
-pub fn run_apps() -> actix_fs::Files {
-    actix_fs::Files::new("/run/apps", "./run/apps").index_file("index.html")
-}
-
-#[get("/list/cmds")]
-pub async fn list_cmds(
-    req: HttpRequest,
-    srv_data: web::Data<Arc<RwLock<data::Body>>>,
-) -> Result<impl Responder, Error> {
+#[get("/list/app")]
+pub async fn list_app(req: HttpRequest, srv_data: SrvData) -> Result<impl Responder, Error> {
     guard::check_access(&req, &srv_data)?;
-    call::list_cmds()
+    call::list_app()
 }
 
-#[post("/run/cmds")]
-pub async fn run_cmds(
-    bytes: Bytes,
+#[get("/run/app/*")]
+pub async fn run_app(req: HttpRequest, srv_data: SrvData) -> Result<impl Responder, Error> {
+    guard::check_access(&req, &srv_data)?;
+    let file = format!("./{}", req.match_info().path());
+    Ok(NamedFile::open(file)?)
+}
+
+#[get("/list/cmd")]
+pub async fn list_cmd(req: HttpRequest, srv_data: SrvData) -> Result<impl Responder, Error> {
+    guard::check_access(&req, &srv_data)?;
+    call::list_cmd()
+}
+
+#[post("/run/cmd/*")]
+pub async fn run_cmd(
     req: HttpRequest,
-    srv_data: web::Data<Arc<RwLock<data::Body>>>,
+    srv_data: SrvData,
+    bytes: Bytes,
 ) -> Result<impl Responder, Error> {
     let body = utils::get_body(bytes)?;
     guard::check_access(&req, &srv_data)?;
     Ok(body)
+}
+
+#[get("/list/dbs")]
+pub async fn list_dbs(req: HttpRequest, srv_data: SrvData) -> Result<impl Responder, Error> {
+    guard::check_access(&req, &srv_data)?;
+    call::list_cmd()
+}
+
+#[post("/run/dbs/*")]
+pub async fn run_dbs(
+    req: HttpRequest,
+    srv_data: SrvData,
+    bytes: Bytes,
+) -> Result<impl Responder, Error> {
+    let body = utils::get_body(bytes)?;
+    guard::check_access(&req, &srv_data)?;
+    Ok(body)
+}
+
+#[get("/shutdown")]
+pub async fn shutdown(req: HttpRequest, srv_data: SrvData) -> Result<impl Responder, Error> {
+    guard::check_access(&req, &srv_data)?;
+    call::shutdown()
 }

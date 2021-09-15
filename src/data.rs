@@ -1,36 +1,66 @@
-use std::fs;
-use std::path::Path;
+use serde::{Deserialize, Serialize};
+use serde_json;
 
-use rand::distributions::Alphanumeric;
-use rand::{thread_rng, Rng};
+use std::fs::File;
+use std::path::Path;
+use std::collections::HashMap;
 
 use super::setup;
 
 pub struct Body {
-    pub setup_head: setup::Head,
-    pub master_token: String,
+	pub head: setup::Head,
+	pub users: Users,
+	pub bases: Bases,
+	pub tokens: HashMap<String, User>,
+}
+
+pub type Users = Vec<User>;
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct User {
+	pub name: String,
+	pub pass: String,
+	pub master: bool,
+	pub access: Vec<Access>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub enum Access {
+	APP {name: String},
+	CMD {name: String, params: Vec<String>},
+	DBS {name: String},
+}
+
+pub type Bases = Vec<Base>;
+
+#[derive(Serialize, Deserialize)]
+pub struct Base {
+	pub name: String,
+	pub kind: BaseKind,
+	pub info: String,
+}
+
+#[derive(Serialize, Deserialize)]
+pub enum BaseKind {
+	SQLITE, POSTGRES,
 }
 
 impl Body {
-    pub fn new(head: setup::Head) -> Self {
-        Body{
-            setup_head: head,
-            master_token: read_master_token()
-        }
-    }
-}
-
-fn read_master_token() -> String {
-	let path = Path::new("master-token.txt");
-	if path.exists() {
-		return fs::read_to_string("master-token.txt").expect("Error: Could not read the token file.");
-	} else {
-		let new_token: String = thread_rng()
-			.sample_iter(&Alphanumeric)
-			.take(27)
-			.map(char::from)
-			.collect();
-		fs::write(path, &new_token).expect("Error: Could not write the token file.");
-		return new_token;
+	pub fn new(head: setup::Head) -> Self {
+		let users_path = Path::new("users.json");
+		let users = if users_path.exists() {
+			serde_json::from_reader(File::open(users_path).expect("Could not open the users file."))
+				.expect("Could not parse the users file.")
+		} else {
+			Users::new()
+		};
+		let bases_path = Path::new("bases.json");
+		let bases = if bases_path.exists() {
+			serde_json::from_reader(File::open(bases_path).expect("Could not open the bases file."))
+				.expect("Could not parse the bases file.")
+		} else {
+			Bases::new()
+		};
+		Body { head, users, bases, tokens: HashMap::new() }
 	}
 }

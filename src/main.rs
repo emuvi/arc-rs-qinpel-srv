@@ -1,7 +1,8 @@
-use actix_web::{App, HttpServer};
+use actix_web::{web, App, HttpServer};
 
 use std::sync::{Arc, RwLock};
 
+mod auth;
 mod call;
 mod clip;
 mod data;
@@ -10,13 +11,15 @@ mod serve;
 mod setup;
 mod utils;
 
+type SrvData = web::Data<Arc<RwLock<data::Body>>>;
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
 	let args = clip::parse();
 	if args.is_present("no-run") {
 		std::process::exit(0);
 	}
-	println!("QinpelSrv running...");
+	println!("QinpelSrv starting...");
 	let setup = setup::Head::load(args);
 	let server_address = format!("{}:{}", setup.host, setup.port);
 	println!("Server address: {}", server_address);
@@ -25,17 +28,18 @@ async fn main() -> std::io::Result<()> {
 		App::new()
 			.data(data.clone())
 			.service(serve::ping)
-			.service(serve::version)
-			.service(serve::shutdown)
 			.service(serve::favicon)
-			.service(serve::list_apps)
-			.service(serve::run_apps())
-			.service(serve::list_cmds)
-			.service(serve::run_cmds)
+			.service(serve::version)
+			.service(auth::login)
+			.service(serve::list_app)
+			.service(serve::run_app)
+			.service(serve::list_cmd)
+			.service(serve::run_cmd)
+			.service(serve::list_dbs)
+			.service(serve::run_dbs)
+			.service(serve::shutdown)
 	})
 	.bind(server_address)?
 	.run()
 	.await
 }
-
-

@@ -1,15 +1,10 @@
 use actix_web::error::{Error, ErrorForbidden};
-use actix_web::{web, HttpRequest};
+use actix_web::HttpRequest;
 
-use std::sync::{Arc, RwLock};
+use super::SrvData;
 
-use super::data;
-
-pub fn check_access(
-	req: &HttpRequest,
-	srv_data: &web::Data<Arc<RwLock<data::Body>>>,
-) -> Result<(), Error> {
-	if is_origin_local(req) || check_master_token(req, srv_data) {
+pub fn check_access(req: &HttpRequest, srv_data: &SrvData) -> Result<(), Error> {
+	if is_origin_local(req) || check_token(req, srv_data) {
 		return Ok(());
 	} else {
 		return Err(ErrorForbidden(
@@ -24,16 +19,11 @@ pub fn is_origin_local(req: &HttpRequest) -> bool {
 	host.starts_with("127.0.0.1") || host.starts_with("localhost")
 }
 
-pub fn check_master_token(
-	req: &HttpRequest,
-	srv_data: &web::Data<Arc<RwLock<data::Body>>>,
-) -> bool {
+pub fn check_token(req: &HttpRequest, srv_data: &SrvData) -> bool {
 	let given_token = get_qinpel_token(req);
 	if !given_token.is_empty() {
-		let our_token = &srv_data.read().unwrap().master_token;
-		if *our_token == given_token {
-			return true;
-		}
+		// TODO - check the token
+		return true;
 	}
 	return false;
 }
