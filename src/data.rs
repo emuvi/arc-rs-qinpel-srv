@@ -1,9 +1,10 @@
 use serde::{Deserialize, Serialize};
 use serde_json;
 
+use std::collections::HashMap;
 use std::fs::File;
 use std::path::Path;
-use std::collections::HashMap;
+use std::time::SystemTime;
 
 use super::setup;
 
@@ -11,7 +12,13 @@ pub struct Body {
 	pub head: setup::Head,
 	pub users: Users,
 	pub bases: Bases,
-	pub tokens: HashMap<String, User>,
+	pub tokens: HashMap<String, Auth>,
+	pub last_clean: SystemTime,
+}
+
+pub struct Auth {
+	pub user: User,
+	pub from: SystemTime,
 }
 
 pub type Users = Vec<User>;
@@ -26,9 +33,19 @@ pub struct User {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum Access {
-	APP {name: String},
-	CMD {name: String, params: Vec<String>},
-	DBS {name: String},
+	APP { name: String },
+	CMD { name: String, params: Vec<String> },
+	DBS { name: String },
+}
+
+impl std::fmt::Display for Access {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		match self {
+			Access::APP{name} => write!(f, "/run/app/{}/", name),
+			Access::CMD{name, params: _} => write!(f, "/run/cmd/{}/", name),
+			Access::DBS{name} => write!(f, "/run/dbs/{}/", name),
+		}
+    }
 }
 
 pub type Bases = Vec<Base>;
@@ -42,7 +59,8 @@ pub struct Base {
 
 #[derive(Serialize, Deserialize)]
 pub enum BaseKind {
-	SQLITE, POSTGRES,
+	SQLITE,
+	POSTGRES,
 }
 
 impl Body {
@@ -61,6 +79,12 @@ impl Body {
 		} else {
 			Bases::new()
 		};
-		Body { head, users, bases, tokens: HashMap::new() }
+		Body {
+			head,
+			users,
+			bases,
+			tokens: HashMap::new(),
+			last_clean: SystemTime::now(),
+		}
 	}
 }

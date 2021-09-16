@@ -1,4 +1,5 @@
-use actix_web::{web, App, HttpServer};
+use actix_web::error::Error;
+use actix_web::{web, App, HttpResponse, HttpServer};
 
 use std::sync::{Arc, RwLock};
 
@@ -12,6 +13,7 @@ mod setup;
 mod utils;
 
 type SrvData = web::Data<Arc<RwLock<data::Body>>>;
+type SrvResult = Result<HttpResponse, Error>;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
