@@ -17,7 +17,7 @@ pub fn check_run_access(req: &HttpRequest, srv_data: &SrvData) -> Result<(), Err
 pub fn is_origin_local(req: &HttpRequest) -> bool {
 	let info = req.connection_info();
 	let host = info.host();
-	host.starts_with("127.0.0.1") || host.starts_with("localhost")
+	host.starts_with("localhost") || host.starts_with("127.0.0.1")
 }
 
 pub fn check_run_token(req: &HttpRequest, srv_data: &SrvData) -> bool {
