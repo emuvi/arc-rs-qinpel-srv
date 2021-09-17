@@ -1,5 +1,5 @@
-use actix_web::error::{Error, ErrorForbidden};
-use actix_web::{post, web, Responder};
+use actix_web::error::{ErrorForbidden};
+use actix_web::{post, web, HttpResponse};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use serde_derive::Deserialize;
@@ -7,17 +7,18 @@ use serde_derive::Deserialize;
 use super::data::Auth;
 use super::data::User;
 use super::SrvData;
+use super::SrvResult;
 
 static CLEAN_INTERVAL: u64 = 24 * 60 * 60;
 
 #[derive(Deserialize)]
 pub struct TryAuth {
-    name: String,
-    pass: String,
+    pub name: String,
+    pub pass: String,
 }
 
 #[post("/login")]
-pub async fn login(auth: web::Form<TryAuth>, srv_data: SrvData) -> Result<impl Responder, Error> {
+pub async fn login(auth: web::Json<TryAuth>, srv_data: SrvData) -> SrvResult {
     let mut user_found: Option<User> = None;
     {
         let users = &srv_data.read().unwrap().users;
@@ -31,18 +32,18 @@ pub async fn login(auth: web::Form<TryAuth>, srv_data: SrvData) -> Result<impl R
     if user_found.is_none() {
         return Err(ErrorForbidden("User and pass not found."));
     } else {
+        let user = user_found.unwrap();
         let token = generate_token();
-        let result = token.clone();
-        let user_found = user_found.unwrap();
+        let result = format!("{},{}", &token, &user.lang);
         let auth = Auth {
-            user: user_found,
+            user,
             from: std::time::SystemTime::now(),
         };
         {
             srv_data.write().unwrap().tokens.insert(token, auth);
         }
         try_clean_tokens(srv_data);
-        return Ok(result);
+        return Ok(HttpResponse::Ok().body(result));
     }
 }
 

@@ -56,7 +56,7 @@ pub fn get_token_user(req: &HttpRequest, srv_data: &SrvData) -> Option<User> {
 }
 
 pub fn get_qinpel_token(req: &HttpRequest) -> String {
-	if let Some(token) = req.headers().get("QinpelToken") {
+	if let Some(token) = req.headers().get("Qinpel-Token") {
 		if let Ok(token) = token.to_str() {
 			return String::from(token);
 		}

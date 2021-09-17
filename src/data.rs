@@ -27,6 +27,7 @@ pub type Users = Vec<User>;
 pub struct User {
 	pub name: String,
 	pub pass: String,
+	pub lang: String,
 	pub master: bool,
 	pub access: Vec<Access>,
 }

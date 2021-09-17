@@ -10,6 +10,7 @@ mod data;
 mod guard;
 mod serve;
 mod setup;
+mod texts;
 mod utils;
 
 type SrvData = web::Data<Arc<RwLock<data::Body>>>;
@@ -33,6 +34,7 @@ async fn main() -> std::io::Result<()> {
 			.service(serve::favicon)
 			.service(serve::version)
 			.service(auth::login)
+			.service(texts::translate)
 			.service(serve::list_app)
 			.service(serve::run_app)
 			.service(serve::list_cmd)
