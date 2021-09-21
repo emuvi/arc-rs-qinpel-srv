@@ -4,6 +4,16 @@ use actix_web::HttpRequest;
 use super::data::User;
 use super::SrvData;
 
+pub fn get_user(req: &HttpRequest, srv_data: &SrvData) -> Option<User> {
+	if is_origin_local(req) {
+		let users = &srv_data.read().unwrap().users;
+		if let Some(root) = users.into_iter().find(|user| user.name == "root") {
+			return Some(root.clone());
+		}
+	}
+	get_token_user(req, srv_data)
+}
+
 pub fn check_run_access(req: &HttpRequest, srv_data: &SrvData) -> Result<(), Error> {
 	if is_origin_local(req) || check_run_token(req, srv_data) {
 		return Ok(());

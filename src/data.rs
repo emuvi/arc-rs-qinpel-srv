@@ -67,12 +67,13 @@ pub enum BaseKind {
 impl Body {
 	pub fn new(head: setup::Head) -> Self {
 		let users_path = Path::new("users.json");
-		let users = if users_path.exists() {
+		let mut users = if users_path.exists() {
 			serde_json::from_reader(File::open(users_path).expect("Could not open the users file."))
 				.expect("Could not parse the users file.")
 		} else {
 			Users::new()
 		};
+		Body::init_users(&mut users);
 		let bases_path = Path::new("bases.json");
 		let bases = if bases_path.exists() {
 			serde_json::from_reader(File::open(bases_path).expect("Could not open the bases file."))
@@ -86,6 +87,20 @@ impl Body {
 			bases,
 			tokens: HashMap::new(),
 			last_clean: SystemTime::now(),
+		}
+	}
+
+	fn init_users(users: &mut Users) {
+		let has_root = users.into_iter().any(|user| user.name == "root");
+		if !has_root {
+			let root = User {
+				name: String::from("root"),
+				pass: String::new(),
+				lang: String::new(),
+				master: true,
+				access: Vec::new(),
+			};
+			users.push(root);
 		}
 	}
 }
