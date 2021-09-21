@@ -1,4 +1,4 @@
-use actix_web::error::{ErrorForbidden};
+use actix_web::error::ErrorForbidden;
 use actix_web::{HttpRequest, HttpResponse};
 
 use std::path::{Path, PathBuf};
@@ -25,7 +25,9 @@ pub fn list_app(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 		}
 		return Ok(HttpResponse::Ok().body(body));
 	}
-	Err(ErrorForbidden("You don't have access to call this resource."))
+	Err(ErrorForbidden(
+		"You don't have access to call this resource.",
+	))
 }
 
 pub fn list_cmd(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
@@ -45,7 +47,9 @@ pub fn list_cmd(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 		}
 		return Ok(HttpResponse::Ok().body(body));
 	}
-	Err(ErrorForbidden("You don't have access to call this resource."))
+	Err(ErrorForbidden(
+		"You don't have access to call this resource.",
+	))
 }
 
 fn list_folder_dirs(folder: PathBuf) -> SrvResult {
@@ -83,7 +87,9 @@ pub fn list_dbs(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 		}
 		return Ok(HttpResponse::Ok().body(body));
 	}
-	Err(ErrorForbidden("You don't have access to call this resource."))
+	Err(ErrorForbidden(
+		"You don't have access to call this resource.",
+	))
 }
 
 fn list_all_dbs(srv_data: &SrvData) -> SrvResult {

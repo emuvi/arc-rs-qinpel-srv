@@ -21,13 +21,19 @@ pub fn shutdown(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 			return Ok(HttpResponse::Ok().body(result));
 		}
 	}
-	Err(ErrorForbidden("You don't have access to call this resource."))
+	Err(ErrorForbidden(
+		"You don't have access to call this resource.",
+	))
 }
 
 pub fn run_cmd(body: String, req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
-	Err(ErrorForbidden("You don't have access to call this resource."))
+	Err(ErrorForbidden(
+		"You don't have access to call this resource.",
+	))
 }
 
 pub fn run_dbs(body: String, req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
-	Err(ErrorForbidden("You don't have access to call this resource."))
+	Err(ErrorForbidden(
+		"You don't have access to call this resource.",
+	))
 }

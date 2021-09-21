@@ -70,55 +70,77 @@ pub async fn run_dbs(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvRe
 
 #[post("/dir/list")]
 pub async fn dir_list(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    dirs::list(utils::get_body(bytes)?, &req, &srv_data)
+    let path = utils::get_body(bytes)?;
+    guard::check_dir_access(&path, None, &req, &srv_data)?;
+    dirs::list(path, &req, &srv_data)
 }
 
 #[post("/dir/new")]
 pub async fn dir_new(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    dirs::new(utils::get_body(bytes)?, &req, &srv_data)
+    let path = utils::get_body(bytes)?;
+    guard::check_dir_access(&path, None, &req, &srv_data)?;
+    dirs::new(path, &req, &srv_data)
 }
 
 #[post("/dir/copy")]
 pub async fn dir_copy(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    dirs::copy(utils::get_body(bytes)?, &req, &srv_data)
+    let path = utils::get_body(bytes)?;
+    guard::check_dir_access(&path, None, &req, &srv_data)?;
+    dirs::copy(path, &req, &srv_data)
 }
 
 #[post("/dir/move")]
 pub async fn dir_move(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    dirs::mov(utils::get_body(bytes)?, &req, &srv_data)
+    let path = utils::get_body(bytes)?;
+    guard::check_dir_access(&path, None, &req, &srv_data)?;
+    dirs::mov(path, &req, &srv_data)
 }
 
 #[post("/dir/del")]
 pub async fn dir_del(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    dirs::del(utils::get_body(bytes)?, &req, &srv_data)
+    let path = utils::get_body(bytes)?;
+    guard::check_dir_access(&path, None, &req, &srv_data)?;
+    dirs::del(path, &req, &srv_data)
 }
 
 #[post("/file/read")]
 pub async fn file_read(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    files::read(utils::get_body(bytes)?, &req, &srv_data)
+    let path = utils::get_body(bytes)?;
+    guard::check_dir_access(&path, None, &req, &srv_data)?;
+    files::read(path, &req, &srv_data)
 }
 
 #[post("/file/write")]
 pub async fn file_write(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    files::write(utils::get_body(bytes)?, &req, &srv_data)
+    let path = utils::get_body(bytes)?;
+    guard::check_dir_access(&path, None, &req, &srv_data)?;
+    files::write(path, &req, &srv_data)
 }
 
 #[post("/file/append")]
 pub async fn file_append(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    files::append(utils::get_body(bytes)?, &req, &srv_data)
+    let path = utils::get_body(bytes)?;
+    guard::check_dir_access(&path, None, &req, &srv_data)?;
+    files::append(path, &req, &srv_data)
 }
 
 #[post("/file/copy")]
 pub async fn file_copy(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    files::copy(utils::get_body(bytes)?, &req, &srv_data)
+    let path = utils::get_body(bytes)?;
+    guard::check_dir_access(&path, None, &req, &srv_data)?;
+    files::copy(path, &req, &srv_data)
 }
 
 #[post("/file/move")]
 pub async fn file_move(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    files::mov(utils::get_body(bytes)?, &req, &srv_data)
+    let path = utils::get_body(bytes)?;
+    guard::check_dir_access(&path, None, &req, &srv_data)?;
+    files::mov(path, &req, &srv_data)
 }
 
 #[post("/file/del")]
 pub async fn file_del(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    files::del(utils::get_body(bytes)?, &req, &srv_data)
+    let path = utils::get_body(bytes)?;
+    guard::check_dir_access(&path, None, &req, &srv_data)?;
+    files::del(path, &req, &srv_data)
 }

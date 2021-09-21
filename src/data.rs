@@ -83,19 +83,7 @@ impl Body {
 	}
 
 	fn init_users(users: &mut Users) {
-		let mut has_root = false;
-		for user in users {
-			if user.name == "root" {
-				has_root = true;
-			}
-			if user.home.is_empty() {
-				user.home = format!("./run/dir/{}", user.name);
-			}
-			std::fs::create_dir_all(user.home).expect(&format!(
-				"Could not create the {} home dir on: {}",
-				user.name, user.home
-			));
-		}
+		let has_root = users.into_iter().any(|user| user.name == "root");
 		if !has_root {
 			let user = User {
 				name: String::from("root"),
@@ -105,11 +93,16 @@ impl Body {
 				master: true,
 				access: Vec::new(),
 			};
-			std::fs::create_dir_all(user.home).expect(&format!(
+			users.push(user);
+		}
+		for user in users {
+			if user.home.is_empty() {
+				user.home = format!("./run/dir/{}", user.name);
+			}
+			std::fs::create_dir_all(&user.home).expect(&format!(
 				"Could not create the {} home dir on: {}",
 				user.name, user.home
 			));
-			users.push(user);
 		}
 	}
 }
