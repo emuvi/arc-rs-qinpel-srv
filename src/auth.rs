@@ -1,4 +1,4 @@
-use actix_web::error::{ErrorForbidden};
+use actix_web::error::ErrorForbidden;
 use actix_web::{post, web, HttpResponse};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};

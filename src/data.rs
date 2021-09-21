@@ -27,6 +27,7 @@ pub type Users = Vec<User>;
 pub struct User {
 	pub name: String,
 	pub pass: String,
+	pub home: String,
 	pub lang: String,
 	pub master: bool,
 	pub access: Vec<Access>,
@@ -37,16 +38,7 @@ pub enum Access {
 	APP { name: String },
 	CMD { name: String, params: Vec<String> },
 	DBS { name: String },
-}
-
-impl std::fmt::Display for Access {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		match self {
-			Access::APP{name} => write!(f, "/run/app/{}/", name),
-			Access::CMD{name, params: _} => write!(f, "/run/cmd/{}/", name),
-			Access::DBS{name} => write!(f, "/run/dbs/{}/", name),
-		}
-    }
+	DIR { path: String, write: bool },
 }
 
 pub type Bases = Vec<Base>;
@@ -91,16 +83,33 @@ impl Body {
 	}
 
 	fn init_users(users: &mut Users) {
-		let has_root = users.into_iter().any(|user| user.name == "root");
+		let mut has_root = false;
+		for user in users {
+			if user.name == "root" {
+				has_root = true;
+			}
+			if user.home.is_empty() {
+				user.home = format!("./run/dir/{}", user.name);
+			}
+			std::fs::create_dir_all(user.home).expect(&format!(
+				"Could not create the {} home dir on: {}",
+				user.name, user.home
+			));
+		}
 		if !has_root {
-			let root = User {
+			let user = User {
 				name: String::from("root"),
 				pass: String::new(),
+				home: String::from("./run/dir/root"),
 				lang: String::new(),
 				master: true,
 				access: Vec::new(),
 			};
-			users.push(root);
+			std::fs::create_dir_all(user.home).expect(&format!(
+				"Could not create the {} home dir on: {}",
+				user.name, user.home
+			));
+			users.push(user);
 		}
 	}
 }

@@ -2,6 +2,7 @@ use actix_web::error::{Error, ErrorForbidden};
 use actix_web::HttpRequest;
 
 use super::data::User;
+use super::data::Access;
 use super::SrvData;
 
 pub fn get_user(req: &HttpRequest, srv_data: &SrvData) -> Option<User> {
@@ -15,6 +16,16 @@ pub fn get_user(req: &HttpRequest, srv_data: &SrvData) -> Option<User> {
 }
 
 pub fn check_run_access(req: &HttpRequest, srv_data: &SrvData) -> Result<(), Error> {
+	if is_origin_local(req) || check_run_token(req, srv_data) {
+		return Ok(());
+	} else {
+		return Err(ErrorForbidden(
+			"You don't have access to call this resource.",
+		));
+	}
+}
+
+pub fn check_dir_access(params: &str, req: &HttpRequest, srv_data: &SrvData) -> Result<(), Error> {
 	if is_origin_local(req) || check_run_token(req, srv_data) {
 		return Ok(());
 	} else {
@@ -39,14 +50,54 @@ pub fn check_run_token(req: &HttpRequest, srv_data: &SrvData) -> bool {
 	if token_user.is_none() {
 		return false;
 	}
-	let token_user = token_user.unwrap();
-	if token_user.master {
+	let user = token_user.unwrap();
+	if user.master {
 		return true;
 	}
-	for user_access in &token_user.access {
-		if req_path.starts_with(&format!("{}", user_access)) {
-			return true;
+	for user_access in &user.access {
+		match user_access {
+			Access::APP{name} => {
+				if req_path.starts_with(&format!("/run/app/{}/", name)) {
+					return true;
+				}
+			},
+			Access::CMD{name, params: _} => {
+				if req_path.starts_with(&format!("/run/cmd/{}/", name)) {
+					return true;
+				}
+			},
+			Access::DBS{name} => {
+				if req_path.starts_with(&format!("/run/dbs/{}/", name)) {
+					return true;
+				}
+			},
+			_ => {}
 		}
+		
+	}
+	return false;
+}
+
+pub fn check_dir_token(params: &str, req: &HttpRequest, srv_data: &SrvData) -> bool {
+	let token_user = get_token_user(req, srv_data);
+	if token_user.is_none() {
+		return false;
+	}
+	let user = token_user.unwrap();
+	if user.master {
+		return true;
+	}
+	let req_path = req.match_info().path();
+	for user_access in &user.access {
+		match user_access {
+			Access::DIR{path, write} => {
+				if req_path.starts_with(&format!("/run/app/{}/", name)) {
+					return true;
+				}
+			},
+			_ => {}
+		}
+		
 	}
 	return false;
 }
