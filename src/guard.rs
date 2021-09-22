@@ -1,6 +1,8 @@
 use actix_web::error::{Error, ErrorForbidden};
 use actix_web::HttpRequest;
 
+use std::path::PathBuf;
+
 use super::data::Access;
 use super::data::User;
 use super::SrvData;
@@ -26,17 +28,27 @@ pub fn check_run_access(req: &HttpRequest, srv_data: &SrvData) -> Result<(), Err
 }
 
 pub fn check_dir_access(
-	path_ref: &str,
-	path_dest: Option<&str>,
+	path_ref: &PathBuf,
+	path_dest: Option<&PathBuf>,
 	req: &HttpRequest,
 	srv_data: &SrvData,
 ) -> Result<(), Error> {
-	if is_origin_local(req) || check_dir_token(path_ref, path_dest, req, srv_data) {
+	if is_origin_local(req) {
 		return Ok(());
 	} else {
-		return Err(ErrorForbidden(
-			"You don't have access to call this resource.",
-		));
+		let path_ref = &format!("{}", path_ref.display());
+		let path_dest: Option<&str> = if path_dest.is_some() {
+			Some(&format!("{}", path_dest.unwrap().display()))
+		} else {
+			None
+		};
+		if check_dir_token(path_ref, path_dest, req, srv_data) {
+			return Ok(());
+		} else {
+			return Err(ErrorForbidden(
+				"You don't have access to call this resource.",
+			));
+		}
 	}
 }
 

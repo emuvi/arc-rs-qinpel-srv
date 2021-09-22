@@ -55,14 +55,13 @@ pub fn list_cmd(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 fn list_folder_dirs(folder: PathBuf) -> SrvResult {
 	let mut body = String::new();
 	for entry in folder.read_dir()? {
-		if let Ok(entry) = entry {
-			let path = entry.path();
-			if path.is_dir() {
-				if let Some(name) = path.file_name() {
-					if let Some(name) = name.to_str() {
-						body.push_str(name);
-						body.push_str("\n");
-					}
+		let entry = entry?;
+		let path = entry.path();
+		if path.is_dir() {
+			if let Some(name) = path.file_name() {
+				if let Some(name) = name.to_str() {
+					body.push_str(name);
+					body.push_str("\n");
 				}
 			}
 		}

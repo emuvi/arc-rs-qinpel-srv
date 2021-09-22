@@ -1,6 +1,11 @@
 use actix_web::error::{Error, ErrorBadRequest};
 use actix_web::{web::Bytes, HttpRequest};
 
+use std::path::Path;
+use std::path::PathBuf;
+
+use super::SrvData;
+
 pub fn get_body(bytes: Bytes) -> Result<String, Error> {
     match String::from_utf8(bytes.to_vec()) {
         Ok(body) => Ok(body),
@@ -15,4 +20,8 @@ pub fn get_lang(req: &HttpRequest) -> String {
         }
     }
     String::from("en")
+}
+
+pub fn get_absolute(path: &String, req: &HttpRequest, srv_data: &SrvData) -> PathBuf {
+    Path::new(path).to_owned()
 }
