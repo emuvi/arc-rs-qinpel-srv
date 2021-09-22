@@ -7,6 +7,7 @@ use std::path::Path;
 use std::time::SystemTime;
 
 use super::setup;
+use super::utils;
 
 pub struct Body {
 	pub head: setup::Head,
@@ -99,6 +100,7 @@ impl Body {
 			if user.home.is_empty() {
 				user.home = format!("./run/dir/{}", user.name);
 			}
+			user.home = utils::fix_absolute(&user.home);
 			std::fs::create_dir_all(&user.home).expect(&format!(
 				"Could not create the {} home dir on: {}",
 				user.name, user.home

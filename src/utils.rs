@@ -1,10 +1,11 @@
 use actix_web::error::{Error, ErrorBadRequest};
 use actix_web::{web::Bytes, HttpRequest};
 
+use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
 
-use super::SrvData;
+use super::data::User;
 
 pub fn get_body(bytes: Bytes) -> Result<String, Error> {
     match String::from_utf8(bytes.to_vec()) {
@@ -22,6 +23,13 @@ pub fn get_lang(req: &HttpRequest) -> String {
     String::from("en")
 }
 
-pub fn get_absolute(path: &String, req: &HttpRequest, srv_data: &SrvData) -> PathBuf {
+pub fn get_absolute(path: &String, for_user: &User) -> PathBuf {
     Path::new(path).to_owned()
+}
+
+pub fn fix_absolute(path: &str) -> String {
+    if let Ok(fixed) = fs::canonicalize(path) {
+        return format!("{}", fixed.display());
+    }
+    String::from(path)
 }
