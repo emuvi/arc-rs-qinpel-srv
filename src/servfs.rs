@@ -29,7 +29,7 @@ pub async fn dir_list(one: Json<OnePath>, req: HttpRequest, srv_data: SrvData) -
     let user = user.unwrap();
     let path = utils::get_absolute(&one.path, &user);
     guard::check_dir_access(&path, None, "/dir/list", &user)?;
-    dirs::list(path)
+    dirs::list(Path::new(&path).to_owned())
 }
 
 #[post("/dir/new")]
@@ -43,7 +43,7 @@ pub async fn dir_new(one: Json<OnePath>, req: HttpRequest, srv_data: SrvData) ->
     let user = user.unwrap();
     let path = utils::get_absolute(&one.path, &user);
     guard::check_dir_access(&path, None, "/dir/new", &user)?;
-    dirs::new(path)
+    dirs::new(Path::new(&path).to_owned())
 }
 
 #[post("/dir/copy")]
@@ -58,7 +58,10 @@ pub async fn dir_copy(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) -
     let origin = utils::get_absolute(&two.origin, &user);
     let destiny = utils::get_absolute(&two.destiny, &user);
     guard::check_dir_access(&origin, Some(&destiny), "/dir/copy", &user)?;
-    dirs::copy(origin, destiny)
+    dirs::copy(
+        Path::new(&origin).to_owned(),
+        Path::new(&destiny).to_owned(),
+    )
 }
 
 #[post("/dir/move")]
@@ -73,7 +76,10 @@ pub async fn dir_move(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) -
     let origin = utils::get_absolute(&two.origin, &user);
     let destiny = utils::get_absolute(&two.destiny, &user);
     guard::check_dir_access(&origin, Some(&destiny), "/dir/move", &user)?;
-    dirs::mov(origin, destiny)
+    dirs::mov(
+        Path::new(&origin).to_owned(),
+        Path::new(&destiny).to_owned(),
+    )
 }
 
 #[post("/dir/del")]
@@ -87,7 +93,7 @@ pub async fn dir_del(one: Json<OnePath>, req: HttpRequest, srv_data: SrvData) ->
     let user = user.unwrap();
     let path = utils::get_absolute(&one.path, &user);
     guard::check_dir_access(&path, None, "/dir/del", &user)?;
-    dirs::del(path)
+    dirs::del(Path::new(&path).to_owned())
 }
 
 #[post("/file/read")]
@@ -105,15 +111,11 @@ pub async fn file_read(
     let user = user.unwrap();
     let path = utils::get_absolute(&one.path, &user);
     guard::check_dir_access(&path, None, "/file/read", &user)?;
-    files::read(path)
+    files::read(Path::new(&path).to_owned())
 }
 
 #[post("/file/write")]
-pub async fn file_write(
-    rec: Json<PathData>,
-    req: HttpRequest,
-    srv_data: SrvData,
-) -> SrvResult {
+pub async fn file_write(rec: Json<PathData>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
         return Err(ErrorForbidden(
@@ -123,15 +125,11 @@ pub async fn file_write(
     let user = user.unwrap();
     let path = utils::get_absolute(&rec.path, &user);
     guard::check_dir_access(&path, None, "/file/write", &user)?;
-    files::write(path, rec.base64, &rec.data)
+    files::write(Path::new(&path).to_owned(), rec.base64, &rec.data)
 }
 
 #[post("/file/append")]
-pub async fn file_append(
-    rec: Json<PathData>,
-    req: HttpRequest,
-    srv_data: SrvData,
-) -> SrvResult {
+pub async fn file_append(rec: Json<PathData>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
         return Err(ErrorForbidden(
@@ -141,7 +139,7 @@ pub async fn file_append(
     let user = user.unwrap();
     let path = utils::get_absolute(&rec.path, &user);
     guard::check_dir_access(&path, None, "/file/append", &user)?;
-    files::append(path, rec.base64, &rec.data)
+    files::append(Path::new(&path).to_owned(), rec.base64, &rec.data)
 }
 
 #[post("/file/upload")]
@@ -153,7 +151,7 @@ pub async fn file_upload(mut payload: Multipart, req: HttpRequest, srv_data: Srv
         ));
     }
     let user = user.unwrap();
-    let path = Path::new(&user.home).join("upload");
+    let path = utils::join_paths(&user.home, "upload");
     guard::check_dir_access(&path, None, "/file/upload", &user)?;
     std::fs::create_dir_all(&path)?;
     let mut body = String::new();
@@ -161,8 +159,8 @@ pub async fn file_upload(mut payload: Multipart, req: HttpRequest, srv_data: Srv
         if let Some(content_type) = field.content_disposition() {
             if let Some(filename) = content_type.get_filename() {
                 let filename = sanitize_filename::sanitize(filename);
-                let filepath = path.join(filename);
-                let display = format!("{}", filepath.display());
+                let filepath = utils::join_paths(&path, &filename);
+                let display = filepath.clone();
                 let mut f = web::block(|| std::fs::File::create(filepath)).await?;
                 while let Some(chunk) = field.next().await {
                     let data = chunk?;
@@ -189,7 +187,10 @@ pub async fn file_copy(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) 
     let origin = utils::get_absolute(&two.origin, &user);
     let destiny = utils::get_absolute(&two.destiny, &user);
     guard::check_dir_access(&origin, Some(&destiny), "/file/copy", &user)?;
-    files::copy(origin, destiny)
+    files::copy(
+        Path::new(&origin).to_owned(),
+        Path::new(&destiny).to_owned(),
+    )
 }
 
 #[post("/file/move")]
@@ -204,7 +205,10 @@ pub async fn file_move(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) 
     let origin = utils::get_absolute(&two.origin, &user);
     let destiny = utils::get_absolute(&two.destiny, &user);
     guard::check_dir_access(&origin, Some(&destiny), "/file/move", &user)?;
-    files::mov(origin, destiny)
+    files::mov(
+        Path::new(&origin).to_owned(),
+        Path::new(&destiny).to_owned(),
+    )
 }
 
 #[post("/file/del")]
@@ -218,5 +222,5 @@ pub async fn file_del(one: Json<OnePath>, req: HttpRequest, srv_data: SrvData) -
     let user = user.unwrap();
     let path = utils::get_absolute(&one.path, &user);
     guard::check_dir_access(&path, None, "/file/del", &user)?;
-    files::del(path)
+    files::del(Path::new(&path).to_owned())
 }

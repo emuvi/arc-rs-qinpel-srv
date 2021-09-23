@@ -15,7 +15,7 @@ static CLEAN_INTERVAL: u64 = 24 * 60 * 60;
 pub async fn login(auth: Json<TryAuth>, srv_data: SrvData) -> SrvResult {
     let mut user_found: Option<User> = None;
     {
-        let users = &srv_data.read().unwrap().users;
+        let users = &srv_data.users;
         for user in users {
             if auth.name == user.name && auth.pass == user.pass {
                 user_found = Some(user.clone());
@@ -34,7 +34,7 @@ pub async fn login(auth: Json<TryAuth>, srv_data: SrvData) -> SrvResult {
             from: std::time::SystemTime::now(),
         };
         {
-            srv_data.write().unwrap().tokens.insert(token, auth);
+            srv_data.tokens.write().unwrap().insert(token, auth);
         }
         try_clean_tokens(srv_data);
         return Ok(HttpResponse::Ok().body(result));
@@ -42,22 +42,14 @@ pub async fn login(auth: Json<TryAuth>, srv_data: SrvData) -> SrvResult {
 }
 
 fn try_clean_tokens(srv_data: SrvData) {
-    let elapsed = {
-        srv_data
-            .read()
-            .unwrap()
-            .last_clean
-            .elapsed()
-            .unwrap()
-            .as_secs()
-    };
+    let elapsed = { srv_data.last_clean.elapsed().unwrap().as_secs() };
     if elapsed > CLEAN_INTERVAL {
         clean_tokens(srv_data);
     }
 }
 
 fn clean_tokens(srv_data: SrvData) {
-    srv_data.write().unwrap().tokens.retain(|_, auth| {
+    srv_data.tokens.write().unwrap().retain(|_, auth| {
         let elapsed = auth.from.elapsed().unwrap().as_secs();
         return elapsed < CLEAN_INTERVAL;
     });

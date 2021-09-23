@@ -93,7 +93,7 @@ pub fn list_dbs(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 
 fn list_all_dbs(srv_data: &SrvData) -> SrvResult {
 	let mut body = String::new();
-	let bases = &srv_data.read().unwrap().bases;
+	let bases = &srv_data.bases;
 	for base in bases {
 		body.push_str(&base.name);
 		body.push_str("\n");

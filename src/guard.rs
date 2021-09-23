@@ -9,7 +9,7 @@ use super::SrvData;
 
 pub fn get_user(req: &HttpRequest, srv_data: &SrvData) -> Option<User> {
 	if is_origin_local(req) {
-		let users = &srv_data.read().unwrap().users;
+		let users = &srv_data.users;
 		if let Some(root) = users.into_iter().find(|user| user.name == "root") {
 			return Some(root.clone());
 		}
@@ -28,17 +28,11 @@ pub fn check_run_access(req: &HttpRequest, srv_data: &SrvData) -> Result<(), Err
 }
 
 pub fn check_dir_access(
-	path_ref: &PathBuf,
-	path_dest: Option<&PathBuf>,
+	path_ref: &str,
+	path_dest: Option<&str>,
 	resource: &str,
 	user: &User,
 ) -> Result<(), Error> {
-	let path_ref = format!("{}", path_ref.display());
-	let path_dest: Option<String> = if path_dest.is_some() {
-		Some(format!("{}", path_dest.unwrap().display()))
-	} else {
-		None
-	};
 	if check_dir_resource(path_ref, path_dest, resource, user) {
 		return Ok(());
 	} else {
@@ -91,8 +85,8 @@ pub fn check_run_token(req: &HttpRequest, srv_data: &SrvData) -> bool {
 }
 
 fn check_dir_resource(
-	path_ref: String,
-	path_dest: Option<String>,
+	path_ref: &str,
+	path_dest: Option<&str>,
 	resource: &str,
 	user: &User,
 ) -> bool {
@@ -164,7 +158,7 @@ pub fn get_token_user(req: &HttpRequest, srv_data: &SrvData) -> Option<User> {
 	if got_token.is_empty() {
 		return None;
 	}
-	let our_tokens = &srv_data.read().unwrap().tokens;
+	let our_tokens = &srv_data.tokens.read().unwrap();
 	let found_auth = our_tokens.get(&got_token);
 	if found_auth.is_none() {
 		return None;

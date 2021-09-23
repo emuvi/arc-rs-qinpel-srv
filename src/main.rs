@@ -1,7 +1,7 @@
 use actix_web::error::Error;
 use actix_web::{web, App, HttpResponse, HttpServer};
 
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 mod auth;
 mod clip;
@@ -17,7 +17,7 @@ mod setup;
 mod texts;
 mod utils;
 
-type SrvData = web::Data<Arc<RwLock<data::Body>>>;
+type SrvData = web::Data<Arc<data::Body>>;
 type SrvResult = Result<HttpResponse, Error>;
 
 #[actix_web::main]
@@ -26,11 +26,15 @@ async fn main() -> std::io::Result<()> {
 	if args.is_present("no-run") {
 		std::process::exit(0);
 	}
-	println!("QinpelSrv starting...");
+	println!("QinpelSrv loading...");
 	let setup = setup::Head::load(args);
+	println!("Server setup: {:?}", setup);
 	let server_address = format!("{}:{}", setup.host, setup.port);
-	println!("Server address: {}", server_address);
-	let data = Arc::new(RwLock::new(data::Body::new(setup)));
+	let body = data::Body::new(setup);
+	println!("Server users: {:?}", body.users);
+	println!("Server bases: {:?}", body.bases);
+	let data = Arc::new(body);
+	println!("QinpelSrv starting...");
 	HttpServer::new(move || {
 		App::new()
 			.data(data.clone())

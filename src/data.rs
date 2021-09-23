@@ -5,16 +5,53 @@ use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::path::Path;
+use std::sync::RwLock;
 use std::time::SystemTime;
 
 use super::setup;
+use super::utils;
 
 pub struct Body {
 	pub head: setup::Head,
 	pub users: Users,
 	pub bases: Bases,
-	pub tokens: HashMap<String, Auth>,
+	pub tokens: RwLock<HashMap<String, Auth>>,
 	pub last_clean: SystemTime,
+}
+
+pub type Users = Vec<User>;
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct User {
+	pub name: String,
+	pub pass: String,
+	pub home: String,
+	pub lang: String,
+	pub master: bool,
+	pub access: Vec<Access>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub enum Access {
+	APP { name: String },
+	CMD { name: String, params: Vec<String> },
+	DBS { name: String },
+	DIR { path: String, write: bool },
+}
+
+pub type Bases = Vec<Base>;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Base {
+	pub name: String,
+	pub kind: BaseKind,
+	pub info: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum BaseKind {
+	SQLITE,
+	POSTGRES,
 }
 
 pub struct Auth {
@@ -46,41 +83,6 @@ pub struct PathData {
 	pub data: String,
 }
 
-pub type Users = Vec<User>;
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct User {
-	pub name: String,
-	pub pass: String,
-	pub home: String,
-	pub lang: String,
-	pub master: bool,
-	pub access: Vec<Access>,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub enum Access {
-	APP { name: String },
-	CMD { name: String, params: Vec<String> },
-	DBS { name: String },
-	DIR { path: String, write: bool },
-}
-
-pub type Bases = Vec<Base>;
-
-#[derive(Serialize, Deserialize)]
-pub struct Base {
-	pub name: String,
-	pub kind: BaseKind,
-	pub info: String,
-}
-
-#[derive(Serialize, Deserialize)]
-pub enum BaseKind {
-	SQLITE,
-	POSTGRES,
-}
-
 impl Body {
 	pub fn new(head: setup::Head) -> Self {
 		let users_path = Path::new("users.json");
@@ -102,7 +104,7 @@ impl Body {
 			head,
 			users,
 			bases,
-			tokens: HashMap::new(),
+			tokens: RwLock::new(HashMap::new()),
 			last_clean: SystemTime::now(),
 		}
 	}
@@ -120,13 +122,14 @@ impl Body {
 			};
 			users.push(user);
 		}
+		let working =
+			std::env::current_dir().expect("Could not get the current working directory.");
+		let working = format!("{}", working.display());
 		for user in users {
 			if user.home.is_empty() {
 				user.home = format!("./run/dir/{}", user.name);
 			}
-			if let Ok(fixed) = fs::canonicalize(&user.home) {
-				user.home = format!("{}", fixed.display());
-			}
+			user.home = utils::fix_absolute(&user.home, &working);
 			fs::create_dir_all(&user.home).expect(&format!(
 				"Could not create the {} home dir on: {}",
 				user.name, user.home
