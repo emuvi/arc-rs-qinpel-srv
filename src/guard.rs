@@ -90,7 +90,7 @@ pub fn check_run_token(req: &HttpRequest, srv_data: &SrvData) -> bool {
 	return false;
 }
 
-pub fn check_dir_resource(
+fn check_dir_resource(
 	path_ref: String,
 	path_dest: Option<String>,
 	resource: &str,
@@ -119,6 +119,8 @@ pub fn check_dir_resource(
 		return check_dir_write(&user, &path_ref);
 	} else if resource == "/file/append" {
 		return check_dir_write(&user, &path_ref);
+	} else if resource == "/file/upload" {
+		return check_dir_write(&user, &path_ref);
 	} else if resource == "/file/copy" {
 		if let Some(path_dest) = path_dest {
 			return check_dir_read(&user, &path_ref) && check_dir_write(&user, &path_dest);
@@ -129,6 +131,8 @@ pub fn check_dir_resource(
 		}
 	} else if resource == "/file/del" {
 		return check_dir_write(&user, &path_ref);
+	} else {
+		println!("[DEBUG] We got an unknown resource to check: {}", resource)
 	}
 	false
 }

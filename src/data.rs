@@ -2,12 +2,12 @@ use serde::{Deserialize, Serialize};
 use serde_json;
 
 use std::collections::HashMap;
+use std::fs;
 use std::fs::File;
 use std::path::Path;
 use std::time::SystemTime;
 
 use super::setup;
-use super::utils;
 
 pub struct Body {
 	pub head: setup::Head,
@@ -20,6 +20,30 @@ pub struct Body {
 pub struct Auth {
 	pub user: User,
 	pub from: SystemTime,
+}
+
+#[derive(Deserialize)]
+pub struct TryAuth {
+	pub name: String,
+	pub pass: String,
+}
+
+#[derive(Deserialize)]
+pub struct OnePath {
+	pub path: String,
+}
+
+#[derive(Deserialize)]
+pub struct TwoPath {
+	pub origin: String,
+	pub destiny: String,
+}
+
+#[derive(Deserialize)]
+pub struct PathData {
+	pub path: String,
+	pub base64: bool,
+	pub data: String,
 }
 
 pub type Users = Vec<User>;
@@ -100,8 +124,10 @@ impl Body {
 			if user.home.is_empty() {
 				user.home = format!("./run/dir/{}", user.name);
 			}
-			user.home = utils::fix_absolute(&user.home);
-			std::fs::create_dir_all(&user.home).expect(&format!(
+			if let Ok(fixed) = fs::canonicalize(&user.home) {
+				user.home = format!("{}", fixed.display());
+			}
+			fs::create_dir_all(&user.home).expect(&format!(
 				"Could not create the {} home dir on: {}",
 				user.name, user.home
 			));

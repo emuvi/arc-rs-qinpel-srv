@@ -50,7 +50,6 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> 
 }
 
 pub fn copy(origin: PathBuf, destiny: PathBuf) -> SrvResult {
-	let origin = Path::new(&origin);
 	if !origin.exists() {
 		return Err(ErrorBadRequest(
 			"The folder origin to copy does not exists.",
@@ -61,8 +60,7 @@ pub fn copy(origin: PathBuf, destiny: PathBuf) -> SrvResult {
 			"The folder origin to copy is not a directory.",
 		));
 	}
-	let destiny = Path::new(&destiny);
-	copy_dir_all(origin, destiny)?;
+	copy_dir_all(&origin, &destiny)?;
 	Ok(HttpResponse::Ok().body(format!(
 		"Folder copied from: {} to: {}",
 		origin.display(),
@@ -71,7 +69,6 @@ pub fn copy(origin: PathBuf, destiny: PathBuf) -> SrvResult {
 }
 
 pub fn mov(origin: PathBuf, destiny: PathBuf) -> SrvResult {
-	let origin = Path::new(&origin);
 	if !origin.exists() {
 		return Err(ErrorBadRequest(
 			"The folder origin to copy does not exists.",
@@ -82,9 +79,8 @@ pub fn mov(origin: PathBuf, destiny: PathBuf) -> SrvResult {
 			"The folder origin to copy is not a directory.",
 		));
 	}
-	let destiny = Path::new(&destiny);
-	copy_dir_all(origin, destiny)?;
-	fs::remove_dir_all(origin)?;
+	copy_dir_all(&origin, &destiny)?;
+	fs::remove_dir_all(&origin)?;
 	Ok(HttpResponse::Ok().body(format!(
 		"Folder moved from: {} to: {}",
 		origin.display(),

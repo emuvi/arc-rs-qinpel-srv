@@ -1,7 +1,6 @@
 use actix_web::error::{Error, ErrorBadRequest};
 use actix_web::{web::Bytes, HttpRequest};
 
-use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -25,11 +24,4 @@ pub fn get_lang(req: &HttpRequest) -> String {
 
 pub fn get_absolute(path: &String, for_user: &User) -> PathBuf {
     Path::new(path).to_owned()
-}
-
-pub fn fix_absolute(path: &str) -> String {
-    if let Ok(fixed) = fs::canonicalize(path) {
-        return format!("{}", fixed.display());
-    }
-    String::from(path)
 }

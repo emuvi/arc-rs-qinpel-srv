@@ -1,24 +1,18 @@
 use actix_web::error::ErrorForbidden;
-use actix_web::{post, web, HttpResponse};
+use actix_web::{post, web::Json, HttpResponse};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
-use serde_derive::Deserialize;
 
 use super::data::Auth;
+use super::data::TryAuth;
 use super::data::User;
 use super::SrvData;
 use super::SrvResult;
 
 static CLEAN_INTERVAL: u64 = 24 * 60 * 60;
 
-#[derive(Deserialize)]
-pub struct TryAuth {
-    pub name: String,
-    pub pass: String,
-}
-
 #[post("/login")]
-pub async fn login(auth: web::Json<TryAuth>, srv_data: SrvData) -> SrvResult {
+pub async fn login(auth: Json<TryAuth>, srv_data: SrvData) -> SrvResult {
     let mut user_found: Option<User> = None;
     {
         let users = &srv_data.read().unwrap().users;

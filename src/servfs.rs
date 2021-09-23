@@ -1,7 +1,16 @@
-use actix_web::error::{ErrorForbidden};
-use actix_web::{post, web, HttpRequest};
-use serde_derive::Deserialize;
+use actix_files::NamedFile;
+use actix_multipart::Multipart;
+use actix_web::error::{Error, ErrorForbidden};
+use actix_web::{post, web, web::Json, HttpRequest, HttpResponse};
+use futures::{StreamExt, TryStreamExt};
+use sanitize_filename;
 
+use std::io::Write;
+use std::path::Path;
+
+use super::data::OnePath;
+use super::data::PathData;
+use super::data::TwoPath;
 use super::dirs;
 use super::files;
 use super::guard;
@@ -9,22 +18,13 @@ use super::utils;
 use super::SrvData;
 use super::SrvResult;
 
-#[derive(Deserialize)]
-pub struct One {
-    pub path: String,
-}
-
-#[derive(Deserialize)]
-pub struct Two {
-    pub origin: String,
-    pub destiny: String,
-}
-
 #[post("/dir/list")]
-pub async fn dir_list(one: web::Json<One>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
+pub async fn dir_list(one: Json<OnePath>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
-        return Err(ErrorForbidden("You don't have access to call this resource."));
+        return Err(ErrorForbidden(
+            "You don't have access to call this resource.",
+        ));
     }
     let user = user.unwrap();
     let path = utils::get_absolute(&one.path, &user);
@@ -33,10 +33,12 @@ pub async fn dir_list(one: web::Json<One>, req: HttpRequest, srv_data: SrvData) 
 }
 
 #[post("/dir/new")]
-pub async fn dir_new(one: web::Json<One>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
+pub async fn dir_new(one: Json<OnePath>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
-        return Err(ErrorForbidden("You don't have access to call this resource."));
+        return Err(ErrorForbidden(
+            "You don't have access to call this resource.",
+        ));
     }
     let user = user.unwrap();
     let path = utils::get_absolute(&one.path, &user);
@@ -45,10 +47,12 @@ pub async fn dir_new(one: web::Json<One>, req: HttpRequest, srv_data: SrvData) -
 }
 
 #[post("/dir/copy")]
-pub async fn dir_copy(two: web::Json<Two>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
+pub async fn dir_copy(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
-        return Err(ErrorForbidden("You don't have access to call this resource."));
+        return Err(ErrorForbidden(
+            "You don't have access to call this resource.",
+        ));
     }
     let user = user.unwrap();
     let origin = utils::get_absolute(&two.origin, &user);
@@ -58,10 +62,12 @@ pub async fn dir_copy(two: web::Json<Two>, req: HttpRequest, srv_data: SrvData) 
 }
 
 #[post("/dir/move")]
-pub async fn dir_move(two: web::Json<Two>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
+pub async fn dir_move(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
-        return Err(ErrorForbidden("You don't have access to call this resource."));
+        return Err(ErrorForbidden(
+            "You don't have access to call this resource.",
+        ));
     }
     let user = user.unwrap();
     let origin = utils::get_absolute(&two.origin, &user);
@@ -71,10 +77,12 @@ pub async fn dir_move(two: web::Json<Two>, req: HttpRequest, srv_data: SrvData) 
 }
 
 #[post("/dir/del")]
-pub async fn dir_del(one: web::Json<One>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
+pub async fn dir_del(one: Json<OnePath>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
-        return Err(ErrorForbidden("You don't have access to call this resource."));
+        return Err(ErrorForbidden(
+            "You don't have access to call this resource.",
+        ));
     }
     let user = user.unwrap();
     let path = utils::get_absolute(&one.path, &user);
@@ -83,10 +91,16 @@ pub async fn dir_del(one: web::Json<One>, req: HttpRequest, srv_data: SrvData) -
 }
 
 #[post("/file/read")]
-pub async fn file_read(one: web::Json<One>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
+pub async fn file_read(
+    one: Json<OnePath>,
+    req: HttpRequest,
+    srv_data: SrvData,
+) -> Result<NamedFile, Error> {
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
-        return Err(ErrorForbidden("You don't have access to call this resource."));
+        return Err(ErrorForbidden(
+            "You don't have access to call this resource.",
+        ));
     }
     let user = user.unwrap();
     let path = utils::get_absolute(&one.path, &user);
@@ -95,34 +109,81 @@ pub async fn file_read(one: web::Json<One>, req: HttpRequest, srv_data: SrvData)
 }
 
 #[post("/file/write")]
-pub async fn file_write(one: web::Json<One>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
+pub async fn file_write(
+    rec: Json<PathData>,
+    req: HttpRequest,
+    srv_data: SrvData,
+) -> SrvResult {
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
-        return Err(ErrorForbidden("You don't have access to call this resource."));
+        return Err(ErrorForbidden(
+            "You don't have access to call this resource.",
+        ));
     }
     let user = user.unwrap();
-    let path = utils::get_absolute(&one.path, &user);
+    let path = utils::get_absolute(&rec.path, &user);
     guard::check_dir_access(&path, None, "/file/write", &user)?;
-    files::write(path)
+    files::write(path, rec.base64, &rec.data)
 }
 
 #[post("/file/append")]
-pub async fn file_append(one: web::Json<One>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
+pub async fn file_append(
+    rec: Json<PathData>,
+    req: HttpRequest,
+    srv_data: SrvData,
+) -> SrvResult {
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
-        return Err(ErrorForbidden("You don't have access to call this resource."));
+        return Err(ErrorForbidden(
+            "You don't have access to call this resource.",
+        ));
     }
     let user = user.unwrap();
-    let path = utils::get_absolute(&one.path, &user);
+    let path = utils::get_absolute(&rec.path, &user);
     guard::check_dir_access(&path, None, "/file/append", &user)?;
-    files::append(path)
+    files::append(path, rec.base64, &rec.data)
+}
+
+#[post("/file/upload")]
+pub async fn file_upload(mut payload: Multipart, req: HttpRequest, srv_data: SrvData) -> SrvResult {
+    let user = guard::get_user(&req, &srv_data);
+    if user.is_none() {
+        return Err(ErrorForbidden(
+            "You don't have access to call this resource.",
+        ));
+    }
+    let user = user.unwrap();
+    let path = Path::new(&user.home).join("upload");
+    guard::check_dir_access(&path, None, "/file/upload", &user)?;
+    std::fs::create_dir_all(&path)?;
+    let mut body = String::new();
+    while let Ok(Some(mut field)) = payload.try_next().await {
+        if let Some(content_type) = field.content_disposition() {
+            if let Some(filename) = content_type.get_filename() {
+                let filename = sanitize_filename::sanitize(filename);
+                let filepath = path.join(filename);
+                let display = format!("{}", filepath.display());
+                let mut f = web::block(|| std::fs::File::create(filepath)).await?;
+                while let Some(chunk) = field.next().await {
+                    let data = chunk?;
+                    f = web::block(move || f.write_all(&data).map(|_| f)).await?;
+                }
+                body.push_str("Uploaded: ");
+                body.push_str(&display);
+                body.push_str("\n");
+            }
+        }
+    }
+    Ok(HttpResponse::Ok().body(body))
 }
 
 #[post("/file/copy")]
-pub async fn file_copy(two: web::Json<Two>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
+pub async fn file_copy(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
-        return Err(ErrorForbidden("You don't have access to call this resource."));
+        return Err(ErrorForbidden(
+            "You don't have access to call this resource.",
+        ));
     }
     let user = user.unwrap();
     let origin = utils::get_absolute(&two.origin, &user);
@@ -132,10 +193,12 @@ pub async fn file_copy(two: web::Json<Two>, req: HttpRequest, srv_data: SrvData)
 }
 
 #[post("/file/move")]
-pub async fn file_move(two: web::Json<Two>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
+pub async fn file_move(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
-        return Err(ErrorForbidden("You don't have access to call this resource."));
+        return Err(ErrorForbidden(
+            "You don't have access to call this resource.",
+        ));
     }
     let user = user.unwrap();
     let origin = utils::get_absolute(&two.origin, &user);
@@ -145,10 +208,12 @@ pub async fn file_move(two: web::Json<Two>, req: HttpRequest, srv_data: SrvData)
 }
 
 #[post("/file/del")]
-pub async fn file_del(one: web::Json<One>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
+pub async fn file_del(one: Json<OnePath>, req: HttpRequest, srv_data: SrvData) -> SrvResult {
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
-        return Err(ErrorForbidden("You don't have access to call this resource."));
+        return Err(ErrorForbidden(
+            "You don't have access to call this resource.",
+        ));
     }
     let user = user.unwrap();
     let path = utils::get_absolute(&one.path, &user);
