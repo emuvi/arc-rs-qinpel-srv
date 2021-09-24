@@ -1,5 +1,8 @@
 use serde::{Deserialize, Serialize};
 use serde_json;
+use r2d2::Pool;
+use r2d2_sqlite::SqliteConnectionManager;
+use r2d2_postgres::{PostgresConnectionManager, postgres::NoTls};
 
 use std::collections::HashMap;
 use std::fs;
@@ -11,6 +14,9 @@ use std::time::SystemTime;
 use super::setup;
 use super::utils;
 
+type BaseSQLITE = Pool<SqliteConnectionManager>;
+type BasePOSTGRES = Pool<PostgresConnectionManager<NoTls>>;
+
 pub struct Body {
 	pub head: setup::Head,
 	pub users: Users,
@@ -18,6 +24,8 @@ pub struct Body {
 	pub tokens: RwLock<HashMap<String, Auth>>,
 	pub last_clean: SystemTime,
 	pub working: String,
+	pub bases_sqlite: HashMap<String, BaseSQLITE>,
+	pub bases_postgres: HashMap<String, BasePOSTGRES>,
 }
 
 pub type Users = Vec<User>;
@@ -109,6 +117,25 @@ impl Body {
 		let working =
 			std::env::current_dir().expect("Could not get the current working directory.");
 		let working = format!("{}", working.display());
+		let mut bases_sqlite: HashMap<String, BaseSQLITE> = HashMap::new();
+		let mut bases_postgres: HashMap<String, BasePOSTGRES> = HashMap::new();
+		for base in &bases {
+			match base.kind {
+				BaseKind::SQLITE => {
+					let manager = SqliteConnectionManager::file(&base.info);
+    				let pool = Pool::new(manager).unwrap();
+					bases_sqlite.insert(base.name.clone(), pool);
+				},
+				BaseKind::POSTGRES => {
+					let manager = PostgresConnectionManager::new(
+						base.info.parse().unwrap(),
+						NoTls,
+					);
+					let pool = r2d2::Pool::new(manager).unwrap();
+					bases_postgres.insert(base.name.clone(), pool);
+				},
+			}
+		}
 		Body::init_users(&mut users, &working);
 		Body {
 			head,
@@ -116,7 +143,9 @@ impl Body {
 			bases,
 			tokens: RwLock::new(HashMap::new()),
 			last_clean: SystemTime::now(),
-			working
+			working,
+			bases_sqlite,
+			bases_postgres,
 		}
 	}
 
