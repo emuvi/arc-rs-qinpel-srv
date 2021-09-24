@@ -17,6 +17,7 @@ pub struct Body {
 	pub bases: Bases,
 	pub tokens: RwLock<HashMap<String, Auth>>,
 	pub last_clean: SystemTime,
+	pub working: String,
 }
 
 pub type Users = Vec<User>;
@@ -66,6 +67,12 @@ pub struct TryAuth {
 }
 
 #[derive(Deserialize)]
+pub struct RunParams {
+	pub params: Option<Vec<String>>,
+	pub inputs: Option<Vec<String>>,
+}
+
+#[derive(Deserialize)]
 pub struct OnePath {
 	pub path: String,
 }
@@ -92,7 +99,6 @@ impl Body {
 		} else {
 			Users::new()
 		};
-		Body::init_users(&mut users);
 		let bases_path = Path::new("bases.json");
 		let bases = if bases_path.exists() {
 			serde_json::from_reader(File::open(bases_path).expect("Could not open the bases file."))
@@ -100,16 +106,21 @@ impl Body {
 		} else {
 			Bases::new()
 		};
+		let working =
+			std::env::current_dir().expect("Could not get the current working directory.");
+		let working = format!("{}", working.display());
+		Body::init_users(&mut users, &working);
 		Body {
 			head,
 			users,
 			bases,
 			tokens: RwLock::new(HashMap::new()),
 			last_clean: SystemTime::now(),
+			working
 		}
 	}
 
-	fn init_users(users: &mut Users) {
+	fn init_users(users: &mut Users, working: &str) {
 		let has_root = users.into_iter().any(|user| user.name == "root");
 		if !has_root {
 			let user = User {
@@ -122,14 +133,11 @@ impl Body {
 			};
 			users.push(user);
 		}
-		let working =
-			std::env::current_dir().expect("Could not get the current working directory.");
-		let working = format!("{}", working.display());
 		for user in users {
 			if user.home.is_empty() {
 				user.home = format!("./run/dir/{}", user.name);
 			}
-			user.home = utils::fix_absolute(&user.home, &working);
+			user.home = utils::fix_absolute(working, &user.home);
 			fs::create_dir_all(&user.home).expect(&format!(
 				"Could not create the {} home dir on: {}",
 				user.name, user.home

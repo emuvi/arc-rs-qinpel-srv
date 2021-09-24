@@ -1,9 +1,6 @@
 use actix_web::error::{Error, ErrorBadRequest};
 use actix_web::{web::Bytes, HttpRequest};
 
-use std::path::Path;
-use std::path::PathBuf;
-
 use super::data::User;
 
 pub fn get_body(bytes: Bytes) -> Result<String, Error> {
@@ -22,12 +19,16 @@ pub fn get_lang(req: &HttpRequest) -> String {
     String::from("en")
 }
 
-pub fn get_absolute(path: &str, for_user: &User) -> String {
-    fix_absolute(path, &for_user.home)
+pub fn get_absolute(for_user: &User, path: &str) -> String {
+    fix_absolute(&for_user.home, path)
 }
 
-pub fn fix_absolute(path: &str, home: &str) -> String {
-    join_paths(home, path)
+pub fn fix_absolute(home: &str, path: &str) -> String {
+    if path.starts_with(".") {
+        join_paths(home, path)
+    } else {
+        String::from(path)
+    }
 }
 
 pub fn join_paths(path_a: &str, path_b: &str) -> String {
@@ -48,10 +49,10 @@ pub fn join_paths(path_a: &str, path_b: &str) -> String {
     }
     let mut first = true;
     for part in parts {
-        if !first {
-            result.push(std::path::MAIN_SEPARATOR);
-        } else {
+        if first {
             first = false;
+        } else {
+            result.push(std::path::MAIN_SEPARATOR);
         }
         result.push_str(part);
     }
@@ -72,6 +73,9 @@ pub fn split_path(path: &str) -> Vec<&str> {
             start = i + 1;
         }
     }
+    if start < path.len() {
+        result.push(&path[start..]);
+    }
     result
 }
 
@@ -81,4 +85,12 @@ pub fn starts_with_separator(path: &str) -> bool {
 
 pub fn ends_with_separator(path: &str) -> bool {
     path.ends_with("/") || path.ends_with("\\")
+}
+
+pub fn get_exec_extension() -> &'static str {
+    if std::env::consts::OS.starts_with("win") {
+        ".exe"
+    } else {
+        ""
+    }
 }

@@ -1,4 +1,3 @@
-use actix_web::error::ErrorForbidden;
 use actix_web::{HttpRequest, HttpResponse};
 
 use std::path::{Path, PathBuf};
@@ -9,47 +8,39 @@ use super::SrvData;
 use super::SrvResult;
 
 pub fn list_app(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
-	if let Some(user) = guard::get_user(req, srv_data) {
-		if user.master {
-			return list_folder_dirs(Path::new("./run/app").to_owned());
-		}
-		let mut body = String::new();
-		for user_access in &user.access {
-			match user_access {
-				Access::APP { name } => {
-					body.push_str(name);
-					body.push_str("\n");
-				}
-				_ => {}
-			}
-		}
-		return Ok(HttpResponse::Ok().body(body));
+	let user = guard::get_user_or_err(req, srv_data)?;
+	if user.master {
+		return list_folder_dirs(Path::new("./run/app").to_owned());
 	}
-	Err(ErrorForbidden(
-		"You don't have access to call this resource.",
-	))
+	let mut body = String::new();
+	for user_access in &user.access {
+		match user_access {
+			Access::APP { name } => {
+				body.push_str(name);
+				body.push_str("\n");
+			}
+			_ => {}
+		}
+	}
+	Ok(HttpResponse::Ok().body(body))
 }
 
 pub fn list_cmd(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
-	if let Some(user) = guard::get_user(req, srv_data) {
-		if user.master {
-			return list_folder_dirs(Path::new("./run/cmd").to_owned());
-		}
-		let mut body = String::new();
-		for user_access in &user.access {
-			match user_access {
-				Access::CMD { name, params: _ } => {
-					body.push_str(name);
-					body.push_str("\n");
-				}
-				_ => {}
-			}
-		}
-		return Ok(HttpResponse::Ok().body(body));
+	let user = guard::get_user_or_err(req, srv_data)?;
+	if user.master {
+		return list_folder_dirs(Path::new("./run/cmd").to_owned());
 	}
-	Err(ErrorForbidden(
-		"You don't have access to call this resource.",
-	))
+	let mut body = String::new();
+	for user_access in &user.access {
+		match user_access {
+			Access::CMD { name, params: _ } => {
+				body.push_str(name);
+				body.push_str("\n");
+			}
+			_ => {}
+		}
+	}
+	Ok(HttpResponse::Ok().body(body))
 }
 
 fn list_folder_dirs(folder: PathBuf) -> SrvResult {
@@ -70,25 +61,21 @@ fn list_folder_dirs(folder: PathBuf) -> SrvResult {
 }
 
 pub fn list_dbs(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
-	if let Some(user) = guard::get_user(req, srv_data) {
-		if user.master {
-			return list_all_dbs(srv_data);
-		}
-		let mut body = String::new();
-		for user_access in &user.access {
-			match user_access {
-				Access::DBS { name } => {
-					body.push_str(name);
-					body.push_str("\n");
-				}
-				_ => {}
-			}
-		}
-		return Ok(HttpResponse::Ok().body(body));
+	let user = guard::get_user_or_err(req, srv_data)?;
+	if user.master {
+		return list_all_dbs(srv_data);
 	}
-	Err(ErrorForbidden(
-		"You don't have access to call this resource.",
-	))
+	let mut body = String::new();
+	for user_access in &user.access {
+		match user_access {
+			Access::DBS { name } => {
+				body.push_str(name);
+				body.push_str("\n");
+			}
+			_ => {}
+		}
+	}
+	Ok(HttpResponse::Ok().body(body))
 }
 
 fn list_all_dbs(srv_data: &SrvData) -> SrvResult {

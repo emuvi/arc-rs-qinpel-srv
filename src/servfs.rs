@@ -27,7 +27,7 @@ pub async fn dir_list(one: Json<OnePath>, req: HttpRequest, srv_data: SrvData) -
         ));
     }
     let user = user.unwrap();
-    let path = utils::get_absolute(&one.path, &user);
+    let path = utils::get_absolute(&user, &one.path);
     guard::check_dir_access(&path, None, "/dir/list", &user)?;
     dirs::list(Path::new(&path).to_owned())
 }
@@ -41,7 +41,7 @@ pub async fn dir_new(one: Json<OnePath>, req: HttpRequest, srv_data: SrvData) ->
         ));
     }
     let user = user.unwrap();
-    let path = utils::get_absolute(&one.path, &user);
+    let path = utils::get_absolute(&user, &one.path);
     guard::check_dir_access(&path, None, "/dir/new", &user)?;
     dirs::new(Path::new(&path).to_owned())
 }
@@ -55,8 +55,8 @@ pub async fn dir_copy(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) -
         ));
     }
     let user = user.unwrap();
-    let origin = utils::get_absolute(&two.origin, &user);
-    let destiny = utils::get_absolute(&two.destiny, &user);
+    let origin = utils::get_absolute(&user, &two.origin);
+    let destiny = utils::get_absolute(&user, &two.destiny);
     guard::check_dir_access(&origin, Some(&destiny), "/dir/copy", &user)?;
     dirs::copy(
         Path::new(&origin).to_owned(),
@@ -73,8 +73,8 @@ pub async fn dir_move(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) -
         ));
     }
     let user = user.unwrap();
-    let origin = utils::get_absolute(&two.origin, &user);
-    let destiny = utils::get_absolute(&two.destiny, &user);
+    let origin = utils::get_absolute(&user, &two.origin);
+    let destiny = utils::get_absolute(&user, &two.destiny);
     guard::check_dir_access(&origin, Some(&destiny), "/dir/move", &user)?;
     dirs::mov(
         Path::new(&origin).to_owned(),
@@ -91,7 +91,7 @@ pub async fn dir_del(one: Json<OnePath>, req: HttpRequest, srv_data: SrvData) ->
         ));
     }
     let user = user.unwrap();
-    let path = utils::get_absolute(&one.path, &user);
+    let path = utils::get_absolute(&user, &one.path);
     guard::check_dir_access(&path, None, "/dir/del", &user)?;
     dirs::del(Path::new(&path).to_owned())
 }
@@ -109,7 +109,7 @@ pub async fn file_read(
         ));
     }
     let user = user.unwrap();
-    let path = utils::get_absolute(&one.path, &user);
+    let path = utils::get_absolute(&user, &one.path);
     guard::check_dir_access(&path, None, "/file/read", &user)?;
     files::read(Path::new(&path).to_owned())
 }
@@ -123,7 +123,7 @@ pub async fn file_write(rec: Json<PathData>, req: HttpRequest, srv_data: SrvData
         ));
     }
     let user = user.unwrap();
-    let path = utils::get_absolute(&rec.path, &user);
+    let path = utils::get_absolute(&user, &rec.path);
     guard::check_dir_access(&path, None, "/file/write", &user)?;
     files::write(Path::new(&path).to_owned(), rec.base64, &rec.data)
 }
@@ -137,7 +137,7 @@ pub async fn file_append(rec: Json<PathData>, req: HttpRequest, srv_data: SrvDat
         ));
     }
     let user = user.unwrap();
-    let path = utils::get_absolute(&rec.path, &user);
+    let path = utils::get_absolute(&user, &rec.path);
     guard::check_dir_access(&path, None, "/file/append", &user)?;
     files::append(Path::new(&path).to_owned(), rec.base64, &rec.data)
 }
@@ -184,8 +184,8 @@ pub async fn file_copy(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) 
         ));
     }
     let user = user.unwrap();
-    let origin = utils::get_absolute(&two.origin, &user);
-    let destiny = utils::get_absolute(&two.destiny, &user);
+    let origin = utils::get_absolute(&user, &two.origin);
+    let destiny = utils::get_absolute(&user, &two.destiny);
     guard::check_dir_access(&origin, Some(&destiny), "/file/copy", &user)?;
     files::copy(
         Path::new(&origin).to_owned(),
@@ -202,8 +202,8 @@ pub async fn file_move(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) 
         ));
     }
     let user = user.unwrap();
-    let origin = utils::get_absolute(&two.origin, &user);
-    let destiny = utils::get_absolute(&two.destiny, &user);
+    let origin = utils::get_absolute(&user, &two.origin);
+    let destiny = utils::get_absolute(&user, &two.destiny);
     guard::check_dir_access(&origin, Some(&destiny), "/file/move", &user)?;
     files::mov(
         Path::new(&origin).to_owned(),
@@ -220,7 +220,7 @@ pub async fn file_del(one: Json<OnePath>, req: HttpRequest, srv_data: SrvData) -
         ));
     }
     let user = user.unwrap();
-    let path = utils::get_absolute(&one.path, &user);
+    let path = utils::get_absolute(&user, &one.path);
     guard::check_dir_access(&path, None, "/file/del", &user)?;
     files::del(Path::new(&path).to_owned())
 }

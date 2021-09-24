@@ -1,8 +1,6 @@
 use actix_web::error::{Error, ErrorForbidden};
 use actix_web::HttpRequest;
 
-use std::path::PathBuf;
-
 use super::data::Access;
 use super::data::User;
 use super::SrvData;
@@ -17,14 +15,58 @@ pub fn get_user(req: &HttpRequest, srv_data: &SrvData) -> Option<User> {
 	get_token_user(req, srv_data)
 }
 
-pub fn check_run_access(req: &HttpRequest, srv_data: &SrvData) -> Result<(), Error> {
-	if is_origin_local(req) || check_run_token(req, srv_data) {
-		return Ok(());
-	} else {
+pub fn get_user_or_err(req: &HttpRequest, srv_data: &SrvData) -> Result<User, Error> {
+	let user = get_user(req, srv_data);
+	if user.is_none() {
 		return Err(ErrorForbidden(
 			"You don't have access to call this resource.",
 		));
 	}
+	Ok(user.unwrap())
+}
+
+pub fn check_app_access(req: &HttpRequest, srv_data: &SrvData) -> Result<(), Error> {
+	if is_origin_local(req) || check_app_token(req, srv_data) {
+		Ok(())
+	} else {
+		Err(ErrorForbidden(
+			"You don't have access to call this resource.",
+		))
+	}
+}
+
+pub fn check_cmd_access(cmd_name: &str, user: &User) -> Result<(), Error> {
+	if user.master {
+		return Ok(());
+	} else {
+		for user_access in &user.access {
+			if let Access::CMD { name, params: _ } = user_access {
+				if cmd_name == name {
+					return Ok(());
+				}
+			}
+		}
+	}
+	Err(ErrorForbidden(
+		"You don't have access to call this resource.",
+	))
+}
+
+pub fn check_dbs_access(dbs_name: &str, user: &User) -> Result<(), Error> {
+	if user.master {
+		return Ok(());
+	} else {
+		for user_access in &user.access {
+			if let Access::DBS { name } = user_access {
+				if dbs_name == name {
+					return Ok(());
+				}
+			}
+		}
+	}
+	Err(ErrorForbidden(
+		"You don't have access to call this resource.",
+	))
 }
 
 pub fn check_dir_access(
@@ -48,9 +90,15 @@ pub fn is_origin_local(req: &HttpRequest) -> bool {
 	host.starts_with("localhost") || host.starts_with("127.0.0.1")
 }
 
-pub fn check_run_token(req: &HttpRequest, srv_data: &SrvData) -> bool {
+pub fn check_app_token(req: &HttpRequest, srv_data: &SrvData) -> bool {
 	let req_path = req.match_info().path();
-	if req_path.starts_with("/run/app/qinpel-app/") {
+	let req_name = &req_path[9..];
+	let req_name = if let Some(end_name) = req_name.find("/") {
+		&req_name[..end_name]
+	} else {
+		req_name
+	};
+	if req_name == "qinpel-app" {
 		return true;
 	}
 	let token_user = get_token_user(req, srv_data);
@@ -62,23 +110,10 @@ pub fn check_run_token(req: &HttpRequest, srv_data: &SrvData) -> bool {
 		return true;
 	}
 	for user_access in &user.access {
-		match user_access {
-			Access::APP { name } => {
-				if req_path.starts_with(&format!("/run/app/{}/", name)) {
-					return true;
-				}
+		if let Access::APP { name } = user_access {
+			if req_name == name {
+				return true;
 			}
-			Access::CMD { name, params: _ } => {
-				if req_path.starts_with(&format!("/run/cmd/{}/", name)) {
-					return true;
-				}
-			}
-			Access::DBS { name } => {
-				if req_path.starts_with(&format!("/run/dbs/{}/", name)) {
-					return true;
-				}
-			}
-			_ => {}
 		}
 	}
 	return false;
