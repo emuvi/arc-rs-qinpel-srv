@@ -49,6 +49,7 @@ async fn main() -> std::io::Result<()> {
 			.service(server::run_cmd)
 			.service(server::list_dbs)
 			.service(server::run_dbs)
+			.service(server::ask_dbs)
 			.service(servfs::dir_list)
 			.service(servfs::dir_new)
 			.service(servfs::dir_copy)

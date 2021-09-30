@@ -19,11 +19,11 @@ type BasePOSTGRES = Pool<PostgresConnectionManager<NoTls>>;
 
 pub struct Body {
 	pub head: setup::Head,
+	pub desk: String,
 	pub users: Users,
 	pub bases: Bases,
 	pub tokens: RwLock<HashMap<String, Auth>>,
 	pub last_clean: SystemTime,
-	pub working: String,
 	pub bases_sqlite: HashMap<String, BaseSQLITE>,
 	pub bases_postgres: HashMap<String, BasePOSTGRES>,
 }
@@ -100,6 +100,9 @@ pub struct PathData {
 
 impl Body {
 	pub fn new(head: setup::Head) -> Self {
+		let desk =
+			std::env::current_dir().expect("Could not get the current working directory.");
+		let desk = format!("{}", desk.display());
 		let users_path = Path::new("users.json");
 		let mut users = if users_path.exists() {
 			serde_json::from_reader(File::open(users_path).expect("Could not open the users file."))
@@ -114,9 +117,7 @@ impl Body {
 		} else {
 			Bases::new()
 		};
-		let working =
-			std::env::current_dir().expect("Could not get the current working directory.");
-		let working = format!("{}", working.display());
+		
 		let mut bases_sqlite: HashMap<String, BaseSQLITE> = HashMap::new();
 		let mut bases_postgres: HashMap<String, BasePOSTGRES> = HashMap::new();
 		for base in &bases {
@@ -136,20 +137,20 @@ impl Body {
 				},
 			}
 		}
-		Body::init_users(&mut users, &working);
+		Body::init_users(&mut users, &desk);
 		Body {
 			head,
+			desk,
 			users,
 			bases,
 			tokens: RwLock::new(HashMap::new()),
 			last_clean: SystemTime::now(),
-			working,
 			bases_sqlite,
 			bases_postgres,
 		}
 	}
 
-	fn init_users(users: &mut Users, working: &str) {
+	fn init_users(users: &mut Users, srv_desk: &str) {
 		let has_root = users.into_iter().any(|user| user.name == "root");
 		if !has_root {
 			let user = User {
@@ -166,7 +167,7 @@ impl Body {
 			if user.home.is_empty() {
 				user.home = format!("./run/dir/{}", user.name);
 			}
-			user.home = utils::fix_absolute(working, &user.home);
+			user.home = utils::fix_absolute(srv_desk, &user.home);
 			fs::create_dir_all(&user.home).expect(&format!(
 				"Could not create the {} home dir on: {}",
 				user.name, user.home

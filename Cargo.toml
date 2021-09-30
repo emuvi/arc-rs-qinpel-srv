@@ -18,3 +18,8 @@ base64 = "0.13"
 r2d2 = "0.8"
 r2d2_sqlite = "0.18"
 r2d2_postgres = "0.18"
+rust_decimal = { version = "1.16", features = ["db-postgres"] }
+
+[dependencies.rusqlite]
+version = "0.25.1"
+features = ["bundled"]

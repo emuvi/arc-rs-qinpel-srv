@@ -72,7 +72,7 @@ pub async fn run_cmd(
     }
     let user = guard::get_user_or_err(&req, &srv_data)?;
     guard::check_cmd_access(name, &user)?;
-    maker::run_cmd(name, &run_params, &user, &srv_data.working)
+    maker::run_cmd(name, &run_params, &user, &srv_data.desk)
 }
 
 #[get("/list/dbs")]
@@ -92,4 +92,18 @@ pub async fn run_dbs(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvRe
     let user = guard::get_user_or_err(&req, &srv_data)?;
     guard::check_dbs_access(&name, &user)?;
     maker::run_dbs(&name, utils::get_body(bytes)?, &srv_data)
+}
+
+#[post("/ask/dbs/*")]
+pub async fn ask_dbs(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
+    let req_path = req.match_info().path();
+    if req_path.len() < 10 {
+        return Err(ErrorBadRequest(
+            "Your request must have a bigger data base source name.",
+        ));
+    }
+    let name = &req.match_info().path()[9..];
+    let user = guard::get_user_or_err(&req, &srv_data)?;
+    guard::check_dbs_access(&name, &user)?;
+    maker::ask_dbs(&name, utils::get_body(bytes)?, &srv_data)
 }

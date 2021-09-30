@@ -1,0 +1,12 @@
+[
+    {
+        "name": "SQLiteTest",
+        "kind": "SQLITE",
+        "info": "C:\\Temp\\test.sdb"
+    },
+    {
+        "name": "PostgresTest",
+        "kind": "POSTGRES",
+        "info": "postgresql://postgres:Corujade84@localhost:5432/testing"
+    }
+]
