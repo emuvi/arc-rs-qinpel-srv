@@ -2,4 +2,5 @@
 /target
 Cargo.lock
 setup.json
-token.txt
+bases.json
+users.json

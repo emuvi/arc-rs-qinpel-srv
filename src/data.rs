@@ -20,8 +20,8 @@ type BasePOSTGRES = Pool<PostgresConnectionManager<NoTls>>;
 pub struct Body {
 	pub head: setup::Head,
 	pub desk: String,
-	pub users: Users,
 	pub bases: Bases,
+	pub users: Users,
 	pub tokens: RwLock<HashMap<String, Auth>>,
 	pub last_clean: SystemTime,
 	pub bases_sqlite: HashMap<String, BaseSQLITE>,
@@ -103,13 +103,6 @@ impl Body {
 		let desk =
 			std::env::current_dir().expect("Could not get the current working directory.");
 		let desk = format!("{}", desk.display());
-		let users_path = Path::new("users.json");
-		let mut users = if users_path.exists() {
-			serde_json::from_reader(File::open(users_path).expect("Could not open the users file."))
-				.expect("Could not parse the users file.")
-		} else {
-			Users::new()
-		};
 		let bases_path = Path::new("bases.json");
 		let bases = if bases_path.exists() {
 			serde_json::from_reader(File::open(bases_path).expect("Could not open the bases file."))
@@ -117,7 +110,6 @@ impl Body {
 		} else {
 			Bases::new()
 		};
-		
 		let mut bases_sqlite: HashMap<String, BaseSQLITE> = HashMap::new();
 		let mut bases_postgres: HashMap<String, BasePOSTGRES> = HashMap::new();
 		for base in &bases {
@@ -137,6 +129,13 @@ impl Body {
 				},
 			}
 		}
+		let users_path = Path::new("users.json");
+		let mut users = if users_path.exists() {
+			serde_json::from_reader(File::open(users_path).expect("Could not open the users file."))
+				.expect("Could not parse the users file.")
+		} else {
+			Users::new()
+		};
 		Body::init_users(&mut users, &desk);
 		Body {
 			head,
