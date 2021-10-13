@@ -53,7 +53,7 @@ pub fn check_cmd_access(cmd_name: &str, user: &User) -> Result<(), Error> {
 }
 
 pub fn check_dbs_access(dbs_name: &str, user: &User) -> Result<(), Error> {
-	if user.master {
+	if user.master || dbs_name == "default_dbs" {
 		return Ok(());
 	} else {
 		for user_access in &user.access {
