@@ -6,7 +6,7 @@
         {
             "label": "Build",
             "type": "shell",
-            "command": "build.bat",
+            "command": "cargo build",
             "group": {
 				"kind": "build",
 				"isDefault": true
@@ -15,7 +15,7 @@
         {
             "label": "Test",
             "type": "shell",
-            "command": "test.bat",
+            "command": "cargo run",
             "group": {
 				"kind": "test",
 				"isDefault": true
