@@ -1,7 +1,12 @@
 [package]
 name = "qinpel-srv"
+description = "QinpelSrv - Server for Qinpel applications and commands with file system and database source for authorized users."
+repository = "https://github.com/emuvi/qinpel-srv/"
+authors = ["Éverton M. Vieira"]
+license = "LGPL-3.0-only"
 version = "0.4.5"
 edition = "2018"
+
 
 [dependencies]
 clap = "2"

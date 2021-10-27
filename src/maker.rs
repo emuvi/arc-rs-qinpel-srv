@@ -8,9 +8,9 @@ use std::path::Path;
 use std::process::{Command, Stdio};
 use std::time::Duration;
 
+use super::data::Access;
 use super::data::RunParams;
 use super::data::User;
-use super::data::Access;
 use super::guard;
 use super::utils;
 use super::SrvData;
@@ -40,27 +40,23 @@ pub fn run_cmd(cmd_name: &str, run_params: &RunParams, user: &User, srv_desk: &s
 	let exec_name = format!("{}{}", cmd_name, utils::get_exec_extension());
 	let full_exec = working_dir.join(&exec_name);
 	let working_dir = if !full_exec.exists() {
-		working_dir
-			.join("run")
-			.join("cmd")
-			.join(cmd_name)
+		working_dir.join("run").join("cmd").join(cmd_name)
 	} else {
 		working_dir
 	};
 	let full_exec = if !full_exec.exists() {
-		working_dir
-			.join(exec_name)
+		working_dir.join(exec_name)
 	} else {
 		full_exec
 	};
 	let mut cmd = Command::new(full_exec);
 	cmd.current_dir(working_dir);
 	for an_access in &user.access {
-		if let Access::CMD{name, params} = an_access {
+		if let Access::CMD { name, params } = an_access {
 			if name == cmd_name {
 				for param in params {
 					cmd.arg(param);
-				}		
+				}
 			}
 		}
 	}
@@ -245,11 +241,12 @@ pub fn ask_dbs(name: &str, sql: String, srv_data: &SrvData) -> SrvResult {
 }
 
 fn get_column_value_for_csv(column_value: String) -> String {
-	let mut result = if column_value.contains('"') {
-		column_value.replace('"', "\"\"")
-	} else {
-		column_value
-	};
+	let mut result = column_value
+		.replace('"', "\"\"")
+		.replace('\\', "\\\\")
+		.replace("\r", "\\r")
+		.replace("\n", "\\n")
+		.replace("\t", "\\t");
 	if result.contains('"') || result.contains(",") {
 		result.insert(0, '"');
 		result.push('"');

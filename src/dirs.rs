@@ -16,6 +16,9 @@ pub fn list(path: PathBuf) -> SrvResult {
 		return Err(ErrorBadRequest("The folder to list is not a directory."));
 	}
 	let mut body = String::new();
+	body.push_str("P: ");
+	body.push_str(&format!("{}", path.display()));
+	body.push_str("\n");
 	for entry in path.read_dir()? {
 		let entry = entry?;
 		let inside = entry.path();

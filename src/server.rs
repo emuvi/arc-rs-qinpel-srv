@@ -90,7 +90,12 @@ pub async fn run_dbs(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvRe
     }
     let name = &req.match_info().path()[9..];
     let user = guard::get_user_or_err(&req, &srv_data)?;
-    guard::check_dbs_access(&name, &user)?;
+    guard::check_dbs_access(name, &user)?;
+    let name = if name == "default_dbs" {
+        format!("{}_default_dbs", user.name)
+    } else {
+        String::from(name)
+    };
     maker::run_dbs(&name, utils::get_body(bytes)?, &srv_data)
 }
 
@@ -104,6 +109,11 @@ pub async fn ask_dbs(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvRe
     }
     let name = &req.match_info().path()[9..];
     let user = guard::get_user_or_err(&req, &srv_data)?;
-    guard::check_dbs_access(&name, &user)?;
+    guard::check_dbs_access(name, &user)?;
+    let name = if name == "default_dbs" {
+        format!("{}_default_dbs", user.name)
+    } else {
+        String::from(name)
+    };
     maker::ask_dbs(&name, utils::get_body(bytes)?, &srv_data)
 }

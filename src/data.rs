@@ -1,8 +1,8 @@
+use r2d2::Pool;
+use r2d2_postgres::{postgres::NoTls, PostgresConnectionManager};
+use r2d2_sqlite::SqliteConnectionManager;
 use serde::{Deserialize, Serialize};
 use serde_json;
-use r2d2::Pool;
-use r2d2_sqlite::SqliteConnectionManager;
-use r2d2_postgres::{PostgresConnectionManager, postgres::NoTls};
 
 use std::collections::HashMap;
 use std::fs;
@@ -100,35 +100,16 @@ pub struct PathData {
 
 impl Body {
 	pub fn new(head: setup::Head) -> Self {
-		let desk =
-			std::env::current_dir().expect("Could not get the current working directory.");
+		let desk = std::env::current_dir().expect("Could not get the current working directory.");
 		let desk = format!("{}", desk.display());
+
 		let bases_path = Path::new("bases.json");
-		let bases = if bases_path.exists() {
+		let mut bases = if bases_path.exists() {
 			serde_json::from_reader(File::open(bases_path).expect("Could not open the bases file."))
 				.expect("Could not parse the bases file.")
 		} else {
 			Bases::new()
 		};
-		let mut bases_sqlite: HashMap<String, BaseSQLITE> = HashMap::new();
-		let mut bases_postgres: HashMap<String, BasePOSTGRES> = HashMap::new();
-		for base in &bases {
-			match base.kind {
-				BaseKind::SQLITE => {
-					let manager = SqliteConnectionManager::file(&base.info);
-    				let pool = Pool::new(manager).unwrap();
-					bases_sqlite.insert(base.name.clone(), pool);
-				},
-				BaseKind::POSTGRES => {
-					let manager = PostgresConnectionManager::new(
-						base.info.parse().unwrap(),
-						NoTls,
-					);
-					let pool = r2d2::Pool::new(manager).unwrap();
-					bases_postgres.insert(base.name.clone(), pool);
-				},
-			}
-		}
 		let users_path = Path::new("users.json");
 		let mut users = if users_path.exists() {
 			serde_json::from_reader(File::open(users_path).expect("Could not open the users file."))
@@ -137,6 +118,41 @@ impl Body {
 			Users::new()
 		};
 		Body::init_users(&mut users, &desk);
+
+		for user in &users {
+			let default_dbs_name = format!("{}_default_dbs", user.name);
+			let has_default_dbs = (&bases)
+				.into_iter()
+				.any(|base| &base.name == &default_dbs_name);
+			if !has_default_dbs {
+				let default_dbs_file = "default_dbs.sdb";
+				let default_dbs_path = utils::join_paths(&user.home, default_dbs_file);
+				let default_dbs = Base {
+					name: default_dbs_name,
+					kind: BaseKind::SQLITE,
+					info: default_dbs_path,
+				};
+				bases.push(default_dbs);
+			}
+		}
+
+		let mut bases_sqlite: HashMap<String, BaseSQLITE> = HashMap::new();
+		let mut bases_postgres: HashMap<String, BasePOSTGRES> = HashMap::new();
+		for base in &bases {
+			match base.kind {
+				BaseKind::SQLITE => {
+					let manager = SqliteConnectionManager::file(&base.info);
+					let pool = Pool::new(manager).unwrap();
+					bases_sqlite.insert(base.name.clone(), pool);
+				}
+				BaseKind::POSTGRES => {
+					let manager = PostgresConnectionManager::new(base.info.parse().unwrap(), NoTls);
+					let pool = r2d2::Pool::new(manager).unwrap();
+					bases_postgres.insert(base.name.clone(), pool);
+				}
+			}
+		}
+
 		Body {
 			head,
 			desk,
