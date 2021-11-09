@@ -30,13 +30,13 @@ fn write_data(mut file: File, base64: bool, data: &String) -> Result<(), Error> 
 }
 
 pub fn write(path: PathBuf, base64: bool, data: &String) -> SrvResult {
-	let file = OpenOptions::new().create(true).write(true).open(&path)?;
+	let file = OpenOptions::new().create(true).write(true).append(false).open(&path)?;
 	write_data(file, base64, data)?;
 	Ok(HttpResponse::Ok().body(&format!("Written on: {}", path.display())))
 }
 
 pub fn append(path: PathBuf, base64: bool, data: &String) -> SrvResult {
-	let file = OpenOptions::new().create(true).append(true).open(&path)?;
+	let file = OpenOptions::new().create(true).write(true).append(true).open(&path)?;
 	write_data(file, base64, data)?;
 	Ok(HttpResponse::Ok().body(&format!("Appended on: {}", path.display())))
 }

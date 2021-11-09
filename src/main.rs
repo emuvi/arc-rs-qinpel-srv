@@ -1,4 +1,4 @@
-use actix_web::error::Error;
+use actix_web::error::{self, Error};
 use actix_web::{web, App, HttpResponse, HttpServer};
 
 use std::sync::Arc;
@@ -38,6 +38,15 @@ async fn main() -> std::io::Result<()> {
 	HttpServer::new(move || {
 		App::new()
 			.data(data.clone())
+			.app_data(web::JsonConfig::default().error_handler(|err, _req| {
+				error::InternalError::from_response(
+					"",
+					HttpResponse::BadRequest()
+						.content_type("application/json")
+						.body(format!(r#"{{"error":"{}"}}"#, err)),
+				)
+				.into()
+			}))
 			.service(auth::login)
 			.service(server::ping)
 			.service(server::favicon)

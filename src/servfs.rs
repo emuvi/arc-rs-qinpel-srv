@@ -1,11 +1,7 @@
 use actix_files::NamedFile;
-use actix_multipart::Multipart;
 use actix_web::error::{Error, ErrorForbidden};
-use actix_web::{post, web, web::Json, HttpRequest, HttpResponse};
-use futures::{StreamExt, TryStreamExt};
-use sanitize_filename;
+use actix_web::{post, web::Json, HttpRequest};
 
-use std::io::Write;
 use std::path::Path;
 
 use super::data::OnePath;
@@ -140,39 +136,6 @@ pub async fn file_append(rec: Json<PathData>, req: HttpRequest, srv_data: SrvDat
     let path = utils::get_absolute(&user, &rec.path);
     guard::check_dir_access(&path, None, "/file/append", &user)?;
     files::append(Path::new(&path).to_owned(), rec.base64, &rec.data)
-}
-
-#[post("/file/upload")]
-pub async fn file_upload(mut payload: Multipart, req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    let user = guard::get_user(&req, &srv_data);
-    if user.is_none() {
-        return Err(ErrorForbidden(
-            "You don't have access to call this resource.",
-        ));
-    }
-    let user = user.unwrap();
-    let path = utils::join_paths(&user.home, "upload");
-    guard::check_dir_access(&path, None, "/file/upload", &user)?;
-    std::fs::create_dir_all(&path)?;
-    let mut body = String::new();
-    while let Ok(Some(mut field)) = payload.try_next().await {
-        if let Some(content_type) = field.content_disposition() {
-            if let Some(filename) = content_type.get_filename() {
-                let filename = sanitize_filename::sanitize(filename);
-                let filepath = utils::join_paths(&path, &filename);
-                let display = filepath.clone();
-                let mut f = web::block(|| std::fs::File::create(filepath)).await?;
-                while let Some(chunk) = field.next().await {
-                    let data = chunk?;
-                    f = web::block(move || f.write_all(&data).map(|_| f)).await?;
-                }
-                body.push_str("Uploaded: ");
-                body.push_str(&display);
-                body.push_str("\n");
-            }
-        }
-    }
-    Ok(HttpResponse::Ok().body(body))
 }
 
 #[post("/file/copy")]

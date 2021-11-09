@@ -2,6 +2,7 @@ use actix_web::error::ErrorForbidden;
 use actix_web::{post, web::Json, HttpResponse};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
+use serde::{Deserialize, Serialize};
 
 use super::data::Auth;
 use super::data::TryAuth;
@@ -10,6 +11,12 @@ use super::SrvData;
 use super::SrvResult;
 
 static CLEAN_INTERVAL: u64 = 24 * 60 * 60;
+
+#[derive(Serialize, Deserialize)]
+struct Logged {
+    pub token: String,
+    pub lang: String,
+}
 
 #[post("/login")]
 pub async fn login(auth: Json<TryAuth>, srv_data: SrvData) -> SrvResult {
@@ -28,7 +35,10 @@ pub async fn login(auth: Json<TryAuth>, srv_data: SrvData) -> SrvResult {
     } else {
         let user = user_found.unwrap();
         let token = generate_token();
-        let result = format!("{},{}", &token, &user.lang);
+        let result = Logged{
+            token: token.clone(),
+            lang: user.lang.clone(),
+        };
         let auth = Auth {
             user,
             from: std::time::SystemTime::now(),
@@ -37,7 +47,7 @@ pub async fn login(auth: Json<TryAuth>, srv_data: SrvData) -> SrvResult {
             srv_data.tokens.write().unwrap().insert(token, auth);
         }
         try_clean_tokens(srv_data);
-        return Ok(HttpResponse::Ok().body(result));
+        return Ok(HttpResponse::Ok().json(result));
     }
 }
 

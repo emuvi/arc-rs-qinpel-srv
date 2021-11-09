@@ -1,6 +1,3 @@
-use r2d2::Pool;
-use r2d2_postgres::{postgres::NoTls, PostgresConnectionManager};
-use r2d2_sqlite::SqliteConnectionManager;
 use serde::{Deserialize, Serialize};
 use serde_json;
 
@@ -14,9 +11,6 @@ use std::time::SystemTime;
 use super::setup;
 use super::utils;
 
-type BaseSQLITE = Pool<SqliteConnectionManager>;
-type BasePOSTGRES = Pool<PostgresConnectionManager<NoTls>>;
-
 pub struct Body {
 	pub head: setup::Head,
 	pub desk: String,
@@ -24,8 +18,6 @@ pub struct Body {
 	pub users: Users,
 	pub tokens: RwLock<HashMap<String, Auth>>,
 	pub last_clean: SystemTime,
-	pub bases_sqlite: HashMap<String, BaseSQLITE>,
-	pub bases_postgres: HashMap<String, BasePOSTGRES>,
 }
 
 pub type Users = Vec<User>;
@@ -53,14 +45,7 @@ pub type Bases = Vec<Base>;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Base {
 	pub name: String,
-	pub kind: BaseKind,
 	pub info: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub enum BaseKind {
-	SQLITE,
-	POSTGRES,
 }
 
 pub struct Auth {
@@ -129,27 +114,9 @@ impl Body {
 				let default_dbs_path = utils::join_paths(&user.home, default_dbs_file);
 				let default_dbs = Base {
 					name: default_dbs_name,
-					kind: BaseKind::SQLITE,
-					info: default_dbs_path,
+					info: format!("jdbc:sqlite:{}", default_dbs_path),
 				};
 				bases.push(default_dbs);
-			}
-		}
-
-		let mut bases_sqlite: HashMap<String, BaseSQLITE> = HashMap::new();
-		let mut bases_postgres: HashMap<String, BasePOSTGRES> = HashMap::new();
-		for base in &bases {
-			match base.kind {
-				BaseKind::SQLITE => {
-					let manager = SqliteConnectionManager::file(&base.info);
-					let pool = Pool::new(manager).unwrap();
-					bases_sqlite.insert(base.name.clone(), pool);
-				}
-				BaseKind::POSTGRES => {
-					let manager = PostgresConnectionManager::new(base.info.parse().unwrap(), NoTls);
-					let pool = r2d2::Pool::new(manager).unwrap();
-					bases_postgres.insert(base.name.clone(), pool);
-				}
 			}
 		}
 
@@ -160,8 +127,6 @@ impl Body {
 			bases,
 			tokens: RwLock::new(HashMap::new()),
 			last_clean: SystemTime::now(),
-			bases_sqlite,
-			bases_postgres,
 		}
 	}
 
