@@ -6,14 +6,17 @@ use std::io;
 use std::path::Path;
 use std::path::PathBuf;
 
-use super::SrvResult;
+use crate::utils;
+use crate::SrvResult;
 
 pub fn list(path: PathBuf) -> SrvResult {
 	if !path.exists() {
-		return Err(ErrorBadRequest("The folder to list does not exists."));
+		let error = "the folder to list does not exists";
+		return Err(ErrorBadRequest(utils::debug(utils::origin!(), error)));
 	}
 	if !path.is_dir() {
-		return Err(ErrorBadRequest("The folder to list is not a directory."));
+		let error = "the folder to list is not a directory";
+		return Err(ErrorBadRequest(utils::debug(utils::origin!(), error)));
 	}
 	let mut body = String::new();
 	body.push_str("P: ");
@@ -54,9 +57,8 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> 
 
 pub fn copy(origin: PathBuf, destiny: PathBuf) -> SrvResult {
 	if !origin.exists() {
-		return Err(ErrorBadRequest(
-			"The folder origin to copy does not exists.",
-		));
+		let error = "the folder origin to copy does not exists";
+		return Err(ErrorBadRequest(utils::debug(utils::origin!(), error)));
 	}
 	if !origin.is_dir() {
 		return Err(ErrorBadRequest(

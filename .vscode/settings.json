@@ -1,7 +1,11 @@
 {
   "cSpell.words": [
     "actix",
+    "pemfile",
+    "pkcs",
     "rusqlite",
-    "servfs"
+    "rustls",
+    "servfs",
+    "sqlx"
   ]
 }

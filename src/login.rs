@@ -18,8 +18,8 @@ struct Logged {
     pub lang: String,
 }
 
-#[post("/login")]
-pub async fn login(auth: Json<TryAuth>, srv_data: SrvData) -> SrvResult {
+#[post("/enter")]
+pub async fn enter(auth: Json<TryAuth>, srv_data: SrvData) -> SrvResult {
     let mut user_found: Option<User> = None;
     {
         let users = &srv_data.users;

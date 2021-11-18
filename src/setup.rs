@@ -2,7 +2,7 @@ use clap::ArgMatches;
 use serde_json::Value;
 use std::path::Path;
 
-static DEFAULT_HOST: &str = "127.0.0.1";
+static DEFAULT_HOST: &str = "localhost";
 static DEFAULT_PORT: u64 = 5490;
 
 #[derive(Debug)]

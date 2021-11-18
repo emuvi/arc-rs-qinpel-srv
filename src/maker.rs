@@ -1,105 +1,96 @@
-use actix_web::error::{ErrorBadRequest, ErrorForbidden};
-use actix_web::{HttpRequest, HttpResponse};
+use actix_files::NamedFile;
+use actix_web::error::{Error, ErrorBadRequest};
+use actix_web::{
+    get, post,
+    web::{Bytes, Json},
+    HttpRequest,
+};
 
-use std::io::{Read, Write};
-use std::path::Path;
-use std::process::{Command, Stdio};
-use std::time::Duration;
-
-use super::data::Access;
 use super::data::RunParams;
-use super::data::User;
 use super::guard;
+use super::lists;
+use super::persist;
+use super::precept;
 use super::utils;
 use super::SrvData;
 use super::SrvResult;
 
-static SLEEP_TO_SHUTDOWN: Duration = Duration::from_millis(3000);
-
-pub fn shutdown(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
-	if let Some(user) = guard::get_user(req, srv_data) {
-		if user.master {
-			let result = String::from("QinpelSrv is shutdown...");
-			println!("{}", result);
-			std::thread::spawn(|| {
-				std::thread::sleep(SLEEP_TO_SHUTDOWN);
-				std::process::exit(0);
-			});
-			return Ok(HttpResponse::Ok().body(result));
-		}
-	}
-	Err(ErrorForbidden(
-		"You don't have access to call this resource.",
-	))
+#[get("/list/app")]
+pub async fn list_app(req: HttpRequest, srv_data: SrvData) -> SrvResult {
+    lists::list_app(&req, &srv_data)
 }
 
-pub fn run_cmd(cmd_name: &str, run_params: &RunParams, user: &User, srv_desk: &str) -> SrvResult {
-	let working_dir = Path::new(srv_desk).to_owned();
-	let exec_name = format!("{}{}", cmd_name, utils::get_exec_extension());
-	let full_exec = working_dir.join(&exec_name);
-	let working_dir = if !full_exec.exists() {
-		working_dir.join("run").join("cmd").join(cmd_name)
-	} else {
-		working_dir
-	};
-	let full_exec = if !full_exec.exists() {
-		working_dir.join(exec_name)
-	} else {
-		full_exec
-	};
-	let mut cmd = Command::new(full_exec);
-	cmd.current_dir(working_dir);
-	for an_access in &user.access {
-		if let Access::CMD { name, params } = an_access {
-			if name == cmd_name {
-				for param in params {
-					cmd.arg(param);
-				}
-			}
-		}
-	}
-	if let Some(params) = &run_params.params {
-		for param in params {
-			cmd.arg(param);
-		}
-	}
-	let mut child = cmd.stdin(Stdio::piped()).stdout(Stdio::piped()).spawn()?;
-	if let Some(inputs) = &run_params.inputs {
-		let child_stdin = child.stdin.as_mut().unwrap();
-		for input in inputs {
-			child_stdin.write_all(input.as_bytes())?;
-		}
-		drop(child_stdin);
-	}
-	let mut result = String::from("Output: ");
-	child.stdout.unwrap().read_to_string(&mut result)?;
-	Ok(HttpResponse::Ok().body(result))
+#[get("/run/app/*")]
+pub async fn run_app(req: HttpRequest, srv_data: SrvData) -> Result<NamedFile, Error> {
+    guard::check_app_access(&req, &srv_data)?;
+    Ok(NamedFile::open(format!("./{}", req.match_info().path()))?)
 }
 
-pub fn run_dbs(name: &str, sql: String, srv_data: &SrvData) -> SrvResult {
-	Err(ErrorBadRequest(format!(
-		"Could not found the data base source with the name: {}.",
-		name
-	)))
+#[get("/list/cmd")]
+pub async fn list_cmd(req: HttpRequest, srv_data: SrvData) -> SrvResult {
+    lists::list_cmd(&req, &srv_data)
 }
 
-pub fn ask_dbs(name: &str, sql: String, srv_data: &SrvData) -> SrvResult {
-	Err(ErrorBadRequest(format!(
-		"Could not found the data base source with the name: {}.",
-		name
-	)))
+#[post("/run/cmd/*")]
+pub async fn run_cmd(
+    run_params: Json<RunParams>,
+    req: HttpRequest,
+    srv_data: SrvData,
+) -> SrvResult {
+    let req_path = req.match_info().path();
+    if req_path.len() < 10 {
+        return Err(ErrorBadRequest(
+            "Your request must have a bigger command name.",
+        ));
+    }
+    let name = &req.match_info().path()[9..];
+    if req_path.starts_with(".") {
+        return Err(ErrorBadRequest("The command name can not starts with dot."));
+    }
+    let user = guard::get_user_or_err(&req, &srv_data)?;
+    guard::check_cmd_access(name, &user)?;
+    precept::run_cmd(name, &run_params, &user, &srv_data.working_dir)
 }
 
-fn get_column_value_for_csv(column_value: String) -> String {
-	let mut result = column_value
-		.replace('"', "\"\"")
-		.replace('\\', "\\\\")
-		.replace("\r", "\\r")
-		.replace("\n", "\\n")
-		.replace("\t", "\\t");
-	if result.contains('"') || result.contains(",") {
-		result.insert(0, '"');
-		result.push('"');
-	}
-	result
+#[get("/list/dbs")]
+pub async fn list_dbs(req: HttpRequest, srv_data: SrvData) -> SrvResult {
+    lists::list_dbs(&req, &srv_data)
+}
+
+#[post("/run/dbs/*")]
+pub async fn run_dbs(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
+    let req_path = req.match_info().path();
+    if req_path.len() < 10 {
+        return Err(ErrorBadRequest(
+            "Your request must have a bigger data base source name.",
+        ));
+    }
+    let name = &req.match_info().path()[9..];
+    let user = guard::get_user_or_err(&req, &srv_data)?;
+    guard::check_dbs_access(name, &user)?;
+    let name = if name == "default_dbs" {
+        format!("{}_default_dbs", user.name)
+    } else {
+        String::from(name)
+    };
+    persist::run_dbs(&name, &utils::get_body(bytes)?, &srv_data).await
+}
+
+#[post("/ask/dbs/*")]
+pub async fn ask_dbs(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
+    let req_path = req.match_info().path();
+    if req_path.len() < 10 {
+        return Err(ErrorBadRequest(
+            "Your request must have a bigger data base source name.",
+        ));
+    }
+    let name = &req.match_info().path()[9..];
+    let user = guard::get_user_or_err(&req, &srv_data)?;
+    guard::check_dbs_access(name, &user)?;
+    let name = if name == "default_dbs" {
+        format!("{}_default_dbs", user.name)
+    } else {
+        String::from(name)
+    };
+    persist::ask_dbs(&name, &utils::get_body(bytes)?, &srv_data).await
 }
