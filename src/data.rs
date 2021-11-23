@@ -64,8 +64,8 @@ pub struct TryAuth {
 
 #[derive(Deserialize)]
 pub struct RunParams {
-	pub params: Option<Vec<String>>,
-	pub inputs: Option<Vec<String>>,
+	pub params: Vec<String>,
+	pub inputs: Vec<String>,
 }
 
 #[derive(Deserialize)]

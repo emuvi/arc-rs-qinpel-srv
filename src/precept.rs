@@ -18,12 +18,13 @@ pub fn run_cmd(cmd_name: &str, run_params: &RunParams, user: &User, working_dir:
 	let working_dir = Path::new(working_dir).to_owned();
 	let exec_name = format!("{}{}", cmd_name, utils::get_exec_extension());
 	let full_exec = working_dir.join(&exec_name);
-	let working_dir = if !full_exec.exists() {
+	let present_in_work_dir = full_exec.exists();
+	let working_dir = if !present_in_work_dir {
 		working_dir.join("run").join("cmd").join(cmd_name)
 	} else {
 		working_dir
 	};
-	let full_exec = if !full_exec.exists() {
+	let full_exec = if !present_in_work_dir {
 		working_dir.join(exec_name)
 	} else {
 		full_exec
@@ -39,18 +40,17 @@ pub fn run_cmd(cmd_name: &str, run_params: &RunParams, user: &User, working_dir:
 			}
 		}
 	}
-	if let Some(params) = &run_params.params {
-		for param in params {
+	if run_params.params.len() > 0 {
+		for param in &run_params.params {
 			cmd.arg(param);
 		}
 	}
 	let mut child = cmd.stdin(Stdio::piped()).stdout(Stdio::piped()).spawn()?;
-	if let Some(inputs) = &run_params.inputs {
+	if run_params.inputs.len() > 0 {
 		let child_stdin = child.stdin.as_mut().unwrap();
-		for input in inputs {
+		for input in &run_params.inputs {
 			child_stdin.write_all(input.as_bytes())?;
 		}
-		drop(child_stdin);
 	}
 	let mut result = String::from("Output: ");
 	child.stdout.unwrap().read_to_string(&mut result)?;
