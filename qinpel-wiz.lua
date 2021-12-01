@@ -1,4 +1,4 @@
-print("Building binary...")
+print("Building binary for QinpelSrv...")
 wiz.cmd("cargo", {"build", "--release"}, ".", true, true)
 local binary_name = "qinpel-srv" .. wiz.exe_ext
 local binary_origin = "target/release/" .. binary_name
