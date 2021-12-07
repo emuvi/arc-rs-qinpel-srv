@@ -4,7 +4,7 @@ pub fn parse<'a>() -> ArgMatches<'a> {
   App::new("QinpelSrv")
     .version(clap::crate_version!())
     .author("Éverton M. Vieira <everton.muvi@gmail.com>")
-    .about("QinpelSrv - WebServer for Qinpel")
+    .about("Qinpel Server - Web server of graphical user and command line interfaces, file system and database source operations for the Qinpel (Quick Interface for Pointel) Platform.")
     .arg(
       Arg::with_name("host")
         .short("h")
