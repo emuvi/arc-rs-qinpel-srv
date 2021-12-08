@@ -39,8 +39,8 @@ async fn main() -> std::io::Result<()> {
 	println!("Server setup: {:?}", setup);
 	let server_address = format!("{}:{}", setup.host, setup.port);
 	let body = data::Body::new(setup);
-	println!("Server has {} users.", body.users.len());
-	println!("Server has {} bases.", body.bases.len());
+	println!("Server has {} user(s).", body.users.len());
+	println!("Server has {} base(s).", body.bases.len());
 	let data = Arc::new(body);
 	println!("QinpelSrv starting...");
 	let server = HttpServer::new(move || {
