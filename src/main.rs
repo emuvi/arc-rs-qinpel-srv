@@ -14,10 +14,10 @@ mod files;
 mod guard;
 mod lists;
 mod login;
-mod maker;
 mod persist;
 mod pooling;
 mod precept;
+mod runner;
 mod server;
 mod servfs;
 mod setup;
@@ -58,13 +58,13 @@ async fn main() -> std::io::Result<()> {
 			.service(server::version)
 			.service(server::shutdown)
 			.service(login::enter)
-			.service(maker::list_app)
-			.service(maker::run_app)
-			.service(maker::list_cmd)
-			.service(maker::run_cmd)
-			.service(maker::list_dbs)
-			.service(maker::run_dbs)
-			.service(maker::ask_dbs)
+			.service(runner::list_app)
+			.service(runner::run_app)
+			.service(runner::list_cmd)
+			.service(runner::run_cmd)
+			.service(runner::list_dbs)
+			.service(runner::run_dbs)
+			.service(runner::ask_dbs)
 			.service(servfs::dir_list)
 			.service(servfs::dir_new)
 			.service(servfs::dir_copy)

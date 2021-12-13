@@ -1,0 +1,1 @@
+liz.cmd("cargo", {"build"}, ".", true, true)

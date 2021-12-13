@@ -25,15 +25,6 @@ pub fn get_user_or_err(req: &HttpRequest, srv_data: &SrvData) -> Result<User, Er
 	Ok(user.unwrap())
 }
 
-pub fn check_app_access(req: &HttpRequest, srv_data: &SrvData) -> Result<(), Error> {
-	if is_origin_local(req) || check_app_token(req, srv_data) {
-		Ok(())
-	} else {
-		Err(ErrorForbidden(
-			"You don't have access to call this resource.",
-		))
-	}
-}
 
 pub fn check_cmd_access(cmd_name: &str, user: &User) -> Result<(), Error> {
 	if user.master {
@@ -88,35 +79,6 @@ pub fn is_origin_local(req: &HttpRequest) -> bool {
 	let info = req.connection_info();
 	let host = info.host();
 	host.starts_with("localhost") || host.starts_with("127.0.0.1")
-}
-
-pub fn check_app_token(req: &HttpRequest, srv_data: &SrvData) -> bool {
-	let req_path = req.match_info().path();
-	let req_name = &req_path[9..];
-	let req_name = if let Some(end_name) = req_name.find("/") {
-		&req_name[..end_name]
-	} else {
-		req_name
-	};
-	if req_name == "qinpel-app" {
-		return true;
-	}
-	let token_user = get_token_user(req, srv_data);
-	if token_user.is_none() {
-		return false;
-	}
-	let user = token_user.unwrap();
-	if user.master {
-		return true;
-	}
-	for user_access in &user.access {
-		if let Access::APP { name } = user_access {
-			if req_name == name {
-				return true;
-			}
-		}
-	}
-	return false;
 }
 
 fn check_dir_resource(
