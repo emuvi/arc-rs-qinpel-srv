@@ -1,7 +1,6 @@
 /key
 /run
 /target
-Cargo.lock
 setup.json
 bases.json
 users.json
