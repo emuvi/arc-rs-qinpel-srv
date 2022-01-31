@@ -1,1 +1,4 @@
-liz.cmd("cargo", {"build"}, ".", true, true)
+-- liz.cmd("cargo", {"build"}, ".", true, true)
+print("oi")
+liz.mk_dir("tst")
+liz.pause()
