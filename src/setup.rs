@@ -7,6 +7,7 @@ static DEFAULT_PORT: u64 = 5490;
 
 #[derive(Debug)]
 pub struct Head {
+    pub debug: bool,
     pub host: String,
     pub port: u64,
 }
@@ -15,6 +16,7 @@ impl Head {
     pub fn load(args: ArgMatches<'_>) -> Self {
         let mut setup_host = DEFAULT_HOST;
         let mut setup_port = DEFAULT_PORT;
+        let setup_debug = args.is_present("debug");
         if args.is_present("host") {
             setup_host = args
                 .value_of("host")
@@ -53,6 +55,7 @@ impl Head {
             setup_port = server_port;
         }
         Head {
+            debug: setup_debug,
             host: String::from(setup_host),
             port: setup_port,
         }

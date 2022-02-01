@@ -3,9 +3,9 @@ use actix_web::{HttpRequest, HttpResponse};
 use futures::executor;
 
 use std::io::{Read, Write};
-use std::time::Duration;
 use std::path::Path;
 use std::process::{Command, Stdio};
+use std::time::Duration;
 
 use super::data::Access;
 use super::data::RunParams;
@@ -85,16 +85,13 @@ static SLEEP_TO_SHUTDOWN: Duration = Duration::from_millis(1000);
 pub fn shut(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 	if let Some(user) = guard::get_user(req, srv_data) {
 		if user.master {
-			let data_server = srv_data.server.read().unwrap();
-			if let Some(server) = &*data_server {
-				let result = String::from("QinpelSrv is shutting...");
-				println!("{}", result);
-				std::thread::spawn(|| {
-					std::thread::sleep(SLEEP_TO_SHUTDOWN);
-					std::process::exit(0);
-				});
-				return Ok(HttpResponse::Ok().body(result));
-			}
+			let result = String::from("QinpelSrv is shutting...");
+			println!("{}", result);
+			std::thread::spawn(|| {
+				std::thread::sleep(SLEEP_TO_SHUTDOWN);
+				std::process::exit(0);
+			});
+			return Ok(HttpResponse::Ok().body(result));
 		}
 	}
 	Err(ErrorForbidden(

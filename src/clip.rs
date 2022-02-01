@@ -4,7 +4,23 @@ pub fn parse<'a>() -> ArgMatches<'a> {
   App::new("QinpelSrv")
     .version(clap::crate_version!())
     .author("Éverton M. Vieira <everton.muvi@gmail.com>")
-    .about("Qinpel Server - Web server of graphical user and command line interfaces, file system and database source operations for the Qinpel (Quick Interface for Pointel) Platform.")
+    .about("QinpelSrv ( Qinpel Server ) is a command that servers the graphical user and command interfaces of the Pointel platform. Is the backend of the Qinpel, the Quick Interface for Power Intelligence. It also provides easy access for the file system and database source.")
+    .arg(
+      Arg::with_name("debug")
+        .short("d")
+        .long("debug")
+        .takes_value(false)
+        .required(false)
+        .help("On what host should I serve?"),
+    )
+    .arg(
+      Arg::with_name("verbose")
+        .short("V")
+        .long("verbose")
+        .takes_value(false)
+        .required(false)
+        .help("On what host should I serve?"),
+    )
     .arg(
       Arg::with_name("host")
         .short("h")

@@ -6,7 +6,7 @@ use super::data::User;
 use super::SrvData;
 
 pub fn get_user(req: &HttpRequest, srv_data: &SrvData) -> Option<User> {
-	if is_origin_local(req) {
+	if is_debug_local(srv_data, req) {
 		let users = &srv_data.users;
 		if let Some(root) = users.into_iter().find(|user| user.name == "root") {
 			return Some(root.clone());
@@ -24,7 +24,6 @@ pub fn get_user_or_err(req: &HttpRequest, srv_data: &SrvData) -> Result<User, Er
 	}
 	Ok(user.unwrap())
 }
-
 
 pub fn check_cmd_access(cmd_name: &str, user: &User) -> Result<(), Error> {
 	if user.master {
@@ -75,10 +74,13 @@ pub fn check_dir_access(
 	}
 }
 
-pub fn is_origin_local(req: &HttpRequest) -> bool {
+pub fn is_debug_local(srv_data: &SrvData, req: &HttpRequest) -> bool {
 	let info = req.connection_info();
 	let host = info.host();
-	host.starts_with("localhost") || host.starts_with("127.0.0.1")
+	if !host.starts_with("localhost") {
+		return false;
+	}
+	(*srv_data).head.debug
 }
 
 fn check_dir_resource(

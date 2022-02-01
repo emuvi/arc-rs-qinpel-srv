@@ -87,7 +87,7 @@ async fn main() -> std::io::Result<()> {
 		server.bind(server_address)?.run()
 	};
 	let data_runner = runner.clone();
-	{ 
+	{
 		let mut data_server = data_main.server.write().unwrap();
 		*data_server = Some(data_runner);
 	}
