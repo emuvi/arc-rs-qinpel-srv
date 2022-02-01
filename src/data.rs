@@ -1,6 +1,6 @@
+use actix_web::dev::Server;
 use serde::{Deserialize, Serialize};
 use serde_json;
-
 
 use std::collections::HashMap;
 use std::fs;
@@ -9,8 +9,8 @@ use std::path::Path;
 use std::sync::RwLock;
 use std::time::SystemTime;
 
-use crate::setup::Head;
 use crate::pooling::Pooling;
+use crate::setup::Head;
 use crate::utils;
 
 pub struct Body {
@@ -21,6 +21,7 @@ pub struct Body {
 	pub working_dir: String,
 	pub tokens: RwLock<HashMap<String, Auth>>,
 	pub last_clean: SystemTime,
+	pub server: RwLock<Option<Server>>,
 }
 
 pub type Users = Vec<User>;
@@ -100,6 +101,7 @@ impl Body {
 			working_dir,
 			tokens: RwLock::new(HashMap::new()),
 			last_clean: SystemTime::now(),
+			server: RwLock::new(None),
 		}
 	}
 

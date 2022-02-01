@@ -42,6 +42,7 @@ async fn main() -> std::io::Result<()> {
 	println!("Server has {} user(s).", body.users.len());
 	println!("Server has {} base(s).", body.bases.len());
 	let data = Arc::new(body);
+	let data_main = data.clone();
 	println!("QinpelSrv starting...");
 	let server = HttpServer::new(move || {
 		App::new()
@@ -56,7 +57,8 @@ async fn main() -> std::io::Result<()> {
 			.service(server::ping)
 			.service(server::favicon)
 			.service(server::version)
-			.service(server::shutdown)
+			.service(server::stop)
+			.service(server::shut)
 			.service(login::enter)
 			.service(runner::list_app)
 			.service(runner::run_app)
@@ -78,16 +80,18 @@ async fn main() -> std::io::Result<()> {
 			.service(servfs::file_del)
 			.service(trans::translate)
 	});
-	let config = secure_server();
-	if let Some(config) = config {
-		server.bind_rustls(server_address, config)?
-		.run()
-		.await
+	let secure = secure_server();
+	let runner = if let Some(config) = secure {
+		server.bind_rustls(server_address, config)?.run()
 	} else {
-		server.bind(server_address)?
-		.run()
-		.await
+		server.bind(server_address)?.run()
+	};
+	let data_runner = runner.clone();
+	{ 
+		let mut data_server = data_main.server.write().unwrap();
+		*data_server = Some(data_runner);
 	}
+	runner.await
 }
 
 fn secure_server() -> Option<ServerConfig> {

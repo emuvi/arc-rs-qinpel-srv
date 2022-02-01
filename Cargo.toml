@@ -18,4 +18,4 @@ serde_derive = "1"
 rand = "0.8"
 base64 = "0.13"
 sqlx = { version = "0.5", features = [ "runtime-tokio-rustls", "all"] }
-futures = "0.3.5"
+futures = "0.3"

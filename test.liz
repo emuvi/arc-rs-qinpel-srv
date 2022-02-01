@@ -1,6 +1,6 @@
 devs_path = liz.path_parent_find(liz.pwd(), "Devs")
 if devs_path == "" then
-   print("Could not found the Code path.")
+   print("Could not found the Devs path.")
    return
 end
 test_path = liz.path_join(devs_path, "Test")

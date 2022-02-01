@@ -25,7 +25,12 @@ async fn version() -> HttpResponse {
     ))
 }
 
-#[get("/shutdown")]
-pub async fn shutdown(req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    precept::shutdown(&req, &srv_data)
+#[get("/stop")]
+pub async fn stop(req: HttpRequest, srv_data: SrvData) -> SrvResult {
+    precept::stop(&req, &srv_data)
+}
+
+#[get("/shut")]
+pub async fn shut(req: HttpRequest, srv_data: SrvData) -> SrvResult {
+    precept::shut(&req, &srv_data)
 }
