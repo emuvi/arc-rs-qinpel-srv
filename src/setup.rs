@@ -2,12 +2,15 @@ use clap::ArgMatches;
 use serde_json::Value;
 use std::path::Path;
 
+use std::sync::atomic::Ordering;
+
 static DEFAULT_HOST: &str = "localhost";
 static DEFAULT_PORT: u64 = 5490;
 
 #[derive(Debug)]
 pub struct Head {
     pub debug: bool,
+    pub verbose: bool,
     pub host: String,
     pub port: u64,
 }
@@ -17,6 +20,13 @@ impl Head {
         let mut setup_host = DEFAULT_HOST;
         let mut setup_port = DEFAULT_PORT;
         let setup_debug = args.is_present("debug");
+        if setup_debug {
+            crate::DEBUG.store(true, Ordering::Relaxed);
+        }
+        let setup_verbose = args.is_present("verbose");
+        if setup_verbose {
+            crate::VERBOSE.store(true, Ordering::Relaxed);
+        }
         if args.is_present("host") {
             setup_host = args
                 .value_of("host")
@@ -56,6 +66,7 @@ impl Head {
         }
         Head {
             debug: setup_debug,
+            verbose: setup_verbose,
             host: String::from(setup_host),
             port: setup_port,
         }

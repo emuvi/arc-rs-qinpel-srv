@@ -26,7 +26,7 @@ pub struct Body {
 
 pub type Users = Vec<User>;
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct User {
 	pub name: String,
 	pub pass: String,
@@ -36,7 +36,7 @@ pub struct User {
 	pub access: Vec<Access>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Access {
 	APP { name: String },
 	CMD { name: String, params: Vec<String> },
@@ -46,7 +46,7 @@ pub enum Access {
 
 pub type Bases = Vec<Base>;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Base {
 	pub name: String,
 	pub info: String,
