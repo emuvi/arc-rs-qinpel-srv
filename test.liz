@@ -1,9 +1,16 @@
+#!/bin/liz
+print("Searching...")
 devs_path = liz.path_parent_find(liz.pwd(), "Devs")
 if devs_path == "" then
    print("Could not found the Devs path.")
    return
 end
-test_path = liz.path_join(devs_path, "Test")
-test_dest = liz.path_join(test_path, "qinpel-srv")
-liz.cmd("cargo", {"build"}, ".", true, true)
-liz.cp("target/debug/qinpel-srv", test_dest)
+tst_path = liz.path_join(devs_path, "Test")
+srv_dest = liz.path_join(tst_path, "qinpel-srv")
+stp_dest = liz.path_join(tst_path, "setup.json")
+print("Buildind...")
+liz.cmd("cargo", {"build"})
+print("Copying...")
+liz.cp("target/debug/qinpel-srv", srv_dest)
+liz.cp("setup.json", stp_dest)
+print("Finished!")
