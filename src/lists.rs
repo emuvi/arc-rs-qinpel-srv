@@ -84,7 +84,7 @@ pub fn list_sqls(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 	let mut body = String::new();
 	for user_access in &user.access {
 		match user_access {
-			Access::DBS { name } => {
+			Access::SQL { name } => {
 				body.push_str(name);
 				body.push_str("\n");
 			}

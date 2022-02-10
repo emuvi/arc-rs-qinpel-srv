@@ -4,18 +4,27 @@ use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 
-use super::data::Auth;
-use super::data::TryAuth;
-use super::data::User;
-use super::SrvData;
-use super::SrvResult;
+use crate::data::User;
+use crate::SrvData;
+use crate::SrvResult;
 
-static CLEAN_INTERVAL: u64 = 24 * 60 * 60;
+use std::time::SystemTime;
+
+pub struct Auth {
+    pub user: User,
+    pub from: SystemTime,
+}
+
+#[derive(Deserialize)]
+pub struct TryAuth {
+    pub name: String,
+    pub pass: String,
+}
+
 
 #[derive(Serialize, Deserialize)]
 struct Logged {
     pub token: String,
-    pub lang: String,
 }
 
 #[post("/enter")]
@@ -37,7 +46,6 @@ pub async fn enter(auth: Json<TryAuth>, srv_data: SrvData) -> SrvResult {
         let token = generate_token();
         let result = Logged{
             token: token.clone(),
-            lang: user.lang.clone(),
         };
         let auth = Auth {
             user,
@@ -50,6 +58,8 @@ pub async fn enter(auth: Json<TryAuth>, srv_data: SrvData) -> SrvResult {
         return Ok(HttpResponse::Ok().json(result));
     }
 }
+
+static CLEAN_INTERVAL: u64 = 24 * 60 * 60;
 
 fn try_clean_tokens(srv_data: SrvData) {
     let elapsed = { srv_data.last_clean.elapsed().unwrap().as_secs() };

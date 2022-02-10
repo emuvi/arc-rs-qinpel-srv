@@ -6,14 +6,13 @@ use actix_web::{
     HttpRequest,
 };
 
-use super::data::RunParams;
-use super::guard;
-use super::lists;
-use super::persist;
-use super::precept;
-use super::utils;
-use super::SrvData;
-use super::SrvResult;
+use crate::guard;
+use crate::lists;
+use crate::persist;
+use crate::precept::{self, RunParams};
+use crate::utils;
+use crate::SrvData;
+use crate::SrvResult;
 
 #[get("/app/*")]
 pub async fn get_app(req: HttpRequest) -> Result<NamedFile, Error> {
@@ -51,13 +50,13 @@ pub async fn run_sql(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvRe
     }
     let name = &req.match_info().path()[9..];
     let user = guard::get_user_or_err(&req, &srv_data)?;
-    guard::check_dbs_access(name, &user)?;
+    guard::check_sql_access(name, &user)?;
     let name = if name == "default_dbs" {
         format!("{}_default_dbs", user.name)
     } else {
         String::from(name)
     };
-    persist::run_dbs(&name, &utils::get_body(bytes)?, &srv_data).await
+    persist::run_sql(&name, &utils::get_body(bytes)?, &srv_data).await
 }
 
 #[post("/ask/sql/*")]
@@ -70,13 +69,13 @@ pub async fn ask_sql(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvRe
     }
     let name = &req.match_info().path()[9..];
     let user = guard::get_user_or_err(&req, &srv_data)?;
-    guard::check_dbs_access(name, &user)?;
+    guard::check_sql_access(name, &user)?;
     let name = if name == "default_dbs" {
         format!("{}_default_dbs", user.name)
     } else {
         String::from(name)
     };
-    persist::ask_dbs(&name, &utils::get_body(bytes)?, &srv_data).await
+    persist::ask_sql(&name, &utils::get_body(bytes)?, &srv_data).await
 }
 
 #[get("/list/apps")]

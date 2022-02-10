@@ -1,4 +1,5 @@
 use actix_web::dev::Server;
+use liz::liz_paths;
 use serde::{Deserialize, Serialize};
 use serde_json;
 
@@ -8,15 +9,15 @@ use std::path::Path;
 use std::sync::RwLock;
 use std::time::SystemTime;
 
-use crate::pooling::Pooling;
+use crate::login::Auth;
+use crate::pooling::Pool;
 use crate::setup::Head;
-use crate::utils;
 
 pub struct Body {
     pub head: Head,
     pub users: Users,
     pub bases: Bases,
-    pub pooling: Pooling,
+    pub pooling: Pool,
     pub working_dir: String,
     pub tokens: RwLock<HashMap<String, Auth>>,
     pub last_clean: SystemTime,
@@ -30,7 +31,6 @@ pub struct User {
     pub name: String,
     pub pass: String,
     pub home: String,
-    pub lang: String,
     pub master: bool,
     pub access: Vec<Access>,
 }
@@ -39,8 +39,9 @@ pub struct User {
 pub enum Access {
     APP { name: String },
     CMD { name: String, params: Vec<String> },
-    DBS { name: String },
     DIR { path: String, write: bool },
+    SQL { name: String },
+    LIZ { file: bool, eval: bool },
 }
 
 pub type Bases = Vec<Base>;
@@ -51,47 +52,12 @@ pub struct Base {
     pub info: String,
 }
 
-pub struct Auth {
-    pub user: User,
-    pub from: SystemTime,
-}
-
-#[derive(Deserialize)]
-pub struct TryAuth {
-    pub name: String,
-    pub pass: String,
-}
-
-#[derive(Deserialize)]
-pub struct RunParams {
-    pub params: Vec<String>,
-    pub inputs: Vec<String>,
-}
-
-#[derive(Deserialize)]
-pub struct OnePath {
-    pub path: String,
-}
-
-#[derive(Deserialize)]
-pub struct TwoPath {
-    pub origin: String,
-    pub destiny: String,
-}
-
-#[derive(Deserialize)]
-pub struct PathData {
-    pub path: String,
-    pub base64: bool,
-    pub data: String,
-}
-
 impl Body {
     pub fn new(head: Head) -> Self {
         let working_dir = Body::init_working_dir();
         let users = Body::init_users(&working_dir);
         let bases = Body::init_bases(&users);
-        let pooling = Pooling::new();
+        let pooling = Pool::new();
         Body {
             head,
             users,
@@ -124,7 +90,6 @@ impl Body {
                 name: String::from("root"),
                 pass: String::new(),
                 home: String::from("./dir/root"),
-                lang: String::new(),
                 master: true,
                 access: Vec::new(),
             };
@@ -134,7 +99,10 @@ impl Body {
             if user.home.is_empty() {
                 user.home = format!("./dir/{}", user.name);
             }
-            user.home = utils::fix_absolute(working_dir, &user.home);
+            user.home = liz_paths::path_join_if_relative(working_dir, &user.home).expect(&format!(
+                "Could not join the working dir {} with the home {}",
+                working_dir, user.home
+            ));
             std::fs::create_dir_all(&user.home).expect(&format!(
                 "Could not create the {} home dir on: {}",
                 user.name, user.home
@@ -152,17 +120,21 @@ impl Body {
             Bases::new()
         };
         for user in users {
-            let default_dbs_name = format!("{}_default_dbs", user.name);
-            let has_default_dbs = &bases.iter().any(|base| &base.name == &default_dbs_name);
-            if !has_default_dbs {
-                let default_dbs_file = "default_dbs.sdb";
-                let default_dbs_path = utils::join_paths(&user.home, default_dbs_file);
-                let default_dbs_info = format!("sqlite://{}", default_dbs_path);
-                let default_dbs = Base {
-                    name: default_dbs_name,
-                    info: default_dbs_info,
+            let default_sql_name = format!("{}_default_sql", user.name);
+            let has_default_sql = &bases.iter().any(|base| &base.name == &default_sql_name);
+            if !has_default_sql {
+                let default_sql_file = "default_sql.sdb";
+                let default_sql_path =
+                    liz_paths::path_join(&user.home, default_sql_file).expect(&format!(
+                        "Could not join the user home {} with default sql {}",
+                        &user.home, default_sql_file
+                    ));
+                let default_sql_info = format!("sqlite://{}", default_sql_path);
+                let default_sql = Base {
+                    name: default_sql_name,
+                    info: default_sql_info,
                 };
-                bases.push(default_dbs);
+                bases.push(default_sql);
             }
         }
         bases

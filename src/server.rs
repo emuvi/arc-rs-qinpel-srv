@@ -1,5 +1,4 @@
-use actix_files::NamedFile;
-use actix_web::error::{Error, ErrorNotFound};
+use actix_web::error::{ErrorNotFound};
 use actix_web::{get, HttpRequest, HttpResponse};
 
 use super::precept;

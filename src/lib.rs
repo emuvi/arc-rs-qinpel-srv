@@ -1,6 +1,9 @@
+pub use liz;
+
 use actix_web::dev::Service;
 use actix_web::{middleware, web, App, HttpResponse, HttpServer};
 use futures::future::FutureExt;
+use liz::liz_debug;
 use rustls::internal::pemfile::{certs, pkcs8_private_keys};
 use rustls::{NoClientAuth, ServerConfig};
 
@@ -33,7 +36,7 @@ type SrvResult = Result<HttpResponse, SrvError>;
 pub static DEBUG: AtomicBool = AtomicBool::new(false);
 pub static VERBOSE: AtomicBool = AtomicBool::new(false);
 
-pub struct QinpelSrv {
+pub struct QinServer {
     debug: Option<bool>,
     verbose: Option<bool>,
     server_host: Option<String>,
@@ -45,7 +48,7 @@ pub struct QinpelSrv {
     redirects: Option<HashMap<String, String>>,
 }
 
-impl QinpelSrv {
+impl QinServer {
     pub fn new(
         debug: Option<bool>,
         verbose: Option<bool>,
@@ -57,7 +60,7 @@ impl QinpelSrv {
         serves_dirs: bool,
         redirects: Option<HashMap<String, String>>,
     ) -> Self {
-        QinpelSrv {
+        QinServer {
             debug,
             verbose,
             server_host,
@@ -71,8 +74,8 @@ impl QinpelSrv {
     }
 }
 
-pub async fn start(qinpel_srv: QinpelSrv) -> std::io::Result<()> {
-    let setup = setup::Head::load(qinpel_srv);
+pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
+    let setup = setup::Head::load(qin_server);
     let server_address = format!("{}:{}", setup.server_host, setup.server_port);
     let body = data::Body::new(setup);
     if body.head.verbose {
@@ -111,7 +114,7 @@ pub async fn start(qinpel_srv: QinpelSrv) -> std::io::Result<()> {
             .app_data(web::JsonConfig::default().error_handler(|err, _req| {
                 actix_web::error::InternalError::from_response(
                     "",
-                    HttpResponse::BadRequest().body(utils::debug(utils::origin!(), &err)),
+                    HttpResponse::BadRequest().body(liz_debug!(err, "to_json")),
                 )
                 .into()
             }))

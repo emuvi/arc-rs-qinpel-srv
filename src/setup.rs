@@ -4,7 +4,7 @@ use std::path::Path;
 use std::sync::atomic::Ordering;
 use std::collections::HashMap;
 
-use crate::QinpelSrv;
+use crate::QinServer;
 
 static DEFAULT_HOST: &str = "localhost";
 static DEFAULT_PORT: u64 = 5490;
@@ -23,7 +23,7 @@ pub struct Head {
 }
 
 impl Head {
-    pub fn load(qinpel_srv: QinpelSrv) -> Self {
+    pub fn load(qinpel_srv: QinServer) -> Self {
         let mut setup_debug = false;
         let mut setup_verbose = false;
         let mut setup_host = String::from(DEFAULT_HOST);

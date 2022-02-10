@@ -34,7 +34,7 @@ async fn main() -> std::io::Result<()> {
     } else {
         None
     };
-    let server = qinpel_srv::QinpelSrv::new(
+    let server = qinpel_srv::QinServer::new(
         arg_debug,
         arg_verbose,
         arg_host,

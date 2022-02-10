@@ -9,13 +9,13 @@ use std::sync::RwLock;
 
 use super::data::Base;
 
-pub struct Pooling {
+pub struct Pool {
     map: RwLock<HashMap<String, AnyPool>>,
 }
 
-impl Pooling {
-    pub fn new() -> Pooling {
-        Pooling {
+impl Pool {
+    pub fn new() -> Pool {
+        Pool {
             map: RwLock::new(HashMap::new()),
         }
     }
