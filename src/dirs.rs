@@ -46,7 +46,6 @@ pub fn new(path: &str) -> SrvResult {
 
 pub fn copy(origin: &str, destiny: &str) -> SrvResult {
     let origin_pathed = Path::new(origin);
-    let destiny_pathed = Path::new(destiny);
     if !origin_pathed.exists() {
         return Err(ErrorBadRequest(liz_debug!(
             "The origin to copy does not exists",
@@ -81,7 +80,6 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> std::io::Result
 
 pub fn mov(origin: &str, destiny: &str) -> SrvResult {
     let origin_pathed = Path::new(origin);
-    let destiny_pathed = Path::new(destiny);
     if !origin_pathed.exists() {
         return Err(ErrorBadRequest(liz_debug!(
             "The origin to move does not exists",

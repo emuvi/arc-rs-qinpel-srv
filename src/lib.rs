@@ -1,3 +1,4 @@
+pub use actix_web;
 pub use liz;
 
 use actix_web::dev::Service;

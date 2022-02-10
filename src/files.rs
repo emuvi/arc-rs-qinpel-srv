@@ -54,7 +54,6 @@ fn write_data(mut file: File, base64: bool, data: &str) -> Result<(), Error> {
 
 pub fn copy(origin: &str, destiny: &str) -> SrvResult {
     let origin_pathed = Path::new(origin);
-    let destiny_pathed = Path::new(destiny);
     if !origin_pathed.exists() {
         return Err(ErrorBadRequest(liz_debug!(
             "The origin to copy does not exists",
@@ -75,7 +74,6 @@ pub fn copy(origin: &str, destiny: &str) -> SrvResult {
 
 pub fn mov(origin: &str, destiny: &str) -> SrvResult {
     let origin_pathed = Path::new(origin);
-    let destiny_pathed = Path::new(destiny);
     if !origin_pathed.exists() {
         return Err(ErrorBadRequest(liz_debug!(
             "The origin to move does not exists",
