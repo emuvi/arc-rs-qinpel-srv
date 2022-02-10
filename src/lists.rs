@@ -8,9 +8,9 @@ use crate::SrvData;
 use crate::SrvError;
 use crate::SrvResult;
 
-pub fn list_app(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
+pub fn list_apps(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 	let user = guard::get_user_or_err(req, srv_data)?;
-	let dirs = list_folder_dirs(Path::new("./run/app").to_owned())?;
+	let dirs = list_folder_dirs(Path::new("./apps").to_owned())?;
 	let mut body = String::new();
 	if user.master {
 		dirs.into_iter().for_each(|dir| {
@@ -33,9 +33,9 @@ pub fn list_app(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 	Ok(HttpResponse::Ok().body(body))
 }
 
-pub fn list_cmd(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
+pub fn list_cmds(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 	let user = guard::get_user_or_err(req, srv_data)?;
-	let dirs = list_folder_dirs(Path::new("./run/cmd").to_owned())?;
+	let dirs = list_folder_dirs(Path::new("./cmds").to_owned())?;
 	let mut body = String::new();
 	if user.master {
 		dirs.into_iter().for_each(|dir| {
@@ -76,10 +76,10 @@ fn list_folder_dirs(folder: PathBuf) -> Result<Vec<String>, SrvError> {
 	Ok(result)
 }
 
-pub fn list_dbs(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
+pub fn list_sqls(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 	let user = guard::get_user_or_err(req, srv_data)?;
 	if user.master {
-		return list_all_dbs(srv_data);
+		return list_all_sqls(srv_data);
 	}
 	let mut body = String::new();
 	for user_access in &user.access {
@@ -94,7 +94,7 @@ pub fn list_dbs(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 	Ok(HttpResponse::Ok().body(body))
 }
 
-fn list_all_dbs(srv_data: &SrvData) -> SrvResult {
+fn list_all_sqls(srv_data: &SrvData) -> SrvResult {
 	let mut body = String::new();
 	let bases = &srv_data.bases;
 	for base in bases {

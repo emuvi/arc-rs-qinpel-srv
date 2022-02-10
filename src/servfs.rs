@@ -1,6 +1,7 @@
 use actix_files::NamedFile;
-use actix_web::error::{Error, ErrorForbidden};
+use actix_web::error::{Error, ErrorBadRequest, ErrorForbidden};
 use actix_web::{post, web::Json, HttpRequest};
+use liz::liz_files;
 
 use std::path::Path;
 
@@ -19,11 +20,18 @@ pub async fn dir_list(one: Json<OnePath>, req: HttpRequest, srv_data: SrvData) -
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
         return Err(ErrorForbidden(
-            "You don't have access to call this resource.",
+            "You do not have access to call this resource.",
         ));
     }
     let user = user.unwrap();
-    let path = utils::get_absolute(&user, &one.path);
+    let path = match liz_files::path_join_if_relative(&user.home, &one.path) {
+        Ok(path) => path,
+        Err(err) => {
+            return Err(ErrorBadRequest(
+                "We could not join the path with the user home.",
+            ));
+        }
+    };
     guard::check_dir_access(&path, None, "/dir/list", &user)?;
     dirs::list(Path::new(&path).to_owned())
 }
@@ -33,11 +41,18 @@ pub async fn dir_new(one: Json<OnePath>, req: HttpRequest, srv_data: SrvData) ->
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
         return Err(ErrorForbidden(
-            "You don't have access to call this resource.",
+            "You do not have access to call this resource.",
         ));
     }
     let user = user.unwrap();
-    let path = utils::get_absolute(&user, &one.path);
+    let path = match liz_files::path_join_if_relative(&user.home, &one.path) {
+        Ok(path) => path,
+        Err(err) => {
+            return Err(ErrorBadRequest(
+                "We could not join the path with the user home.",
+            ));
+        }
+    };
     guard::check_dir_access(&path, None, "/dir/new", &user)?;
     dirs::new(Path::new(&path).to_owned())
 }
@@ -47,12 +62,26 @@ pub async fn dir_copy(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) -
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
         return Err(ErrorForbidden(
-            "You don't have access to call this resource.",
+            "You do not have access to call this resource.",
         ));
     }
     let user = user.unwrap();
-    let origin = utils::get_absolute(&user, &two.origin);
-    let destiny = utils::get_absolute(&user, &two.destiny);
+    let origin = match liz_files::path_join_if_relative(&user.home, &two.origin) {
+        Ok(path) => path,
+        Err(err) => {
+            return Err(ErrorBadRequest(
+                "We could not join the path origin with the user home.",
+            ));
+        }
+    };
+    let destiny = match liz_files::path_join_if_relative(&user.home, &two.destiny) {
+        Ok(path) => path,
+        Err(err) => {
+            return Err(ErrorBadRequest(
+                "We could not join the path destiny with the user home.",
+            ));
+        }
+    };
     guard::check_dir_access(&origin, Some(&destiny), "/dir/copy", &user)?;
     dirs::copy(
         Path::new(&origin).to_owned(),
@@ -65,12 +94,26 @@ pub async fn dir_move(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) -
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
         return Err(ErrorForbidden(
-            "You don't have access to call this resource.",
+            "You do not have access to call this resource.",
         ));
     }
     let user = user.unwrap();
-    let origin = utils::get_absolute(&user, &two.origin);
-    let destiny = utils::get_absolute(&user, &two.destiny);
+    let origin = match liz_files::path_join_if_relative(&user.home, &two.origin) {
+        Ok(path) => path,
+        Err(err) => {
+            return Err(ErrorBadRequest(
+                "We could not join the path origin with the user home.",
+            ));
+        }
+    };
+    let destiny = match liz_files::path_join_if_relative(&user.home, &two.destiny) {
+        Ok(path) => path,
+        Err(err) => {
+            return Err(ErrorBadRequest(
+                "We could not join the path destiny with the user home.",
+            ));
+        }
+    };
     guard::check_dir_access(&origin, Some(&destiny), "/dir/move", &user)?;
     dirs::mov(
         Path::new(&origin).to_owned(),
@@ -83,11 +126,18 @@ pub async fn dir_del(one: Json<OnePath>, req: HttpRequest, srv_data: SrvData) ->
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
         return Err(ErrorForbidden(
-            "You don't have access to call this resource.",
+            "You do not have access to call this resource.",
         ));
     }
     let user = user.unwrap();
-    let path = utils::get_absolute(&user, &one.path);
+    let path = match liz_files::path_join_if_relative(&user.home, &one.path) {
+        Ok(path) => path,
+        Err(err) => {
+            return Err(ErrorBadRequest(
+                "We could not join the path with the user home.",
+            ));
+        }
+    };
     guard::check_dir_access(&path, None, "/dir/del", &user)?;
     dirs::del(Path::new(&path).to_owned())
 }
@@ -101,7 +151,7 @@ pub async fn file_read(
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
         return Err(ErrorForbidden(
-            "You don't have access to call this resource.",
+            "You do not have access to call this resource.",
         ));
     }
     let user = user.unwrap();
@@ -115,7 +165,7 @@ pub async fn file_write(rec: Json<PathData>, req: HttpRequest, srv_data: SrvData
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
         return Err(ErrorForbidden(
-            "You don't have access to call this resource.",
+            "You do not have access to call this resource.",
         ));
     }
     let user = user.unwrap();
@@ -129,7 +179,7 @@ pub async fn file_append(rec: Json<PathData>, req: HttpRequest, srv_data: SrvDat
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
         return Err(ErrorForbidden(
-            "You don't have access to call this resource.",
+            "You do not have access to call this resource.",
         ));
     }
     let user = user.unwrap();
@@ -143,7 +193,7 @@ pub async fn file_copy(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) 
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
         return Err(ErrorForbidden(
-            "You don't have access to call this resource.",
+            "You do not have access to call this resource.",
         ));
     }
     let user = user.unwrap();
@@ -161,7 +211,7 @@ pub async fn file_move(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) 
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
         return Err(ErrorForbidden(
-            "You don't have access to call this resource.",
+            "You do not have access to call this resource.",
         ));
     }
     let user = user.unwrap();
@@ -179,7 +229,7 @@ pub async fn file_del(one: Json<OnePath>, req: HttpRequest, srv_data: SrvData) -
     let user = guard::get_user(&req, &srv_data);
     if user.is_none() {
         return Err(ErrorForbidden(
-            "You don't have access to call this resource.",
+            "You do not have access to call this resource.",
         ));
     }
     let user = user.unwrap();

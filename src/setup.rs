@@ -1,8 +1,10 @@
-use clap::ArgMatches;
 use serde_json::Value;
-use std::path::Path;
 
+use std::path::Path;
 use std::sync::atomic::Ordering;
+use std::collections::HashMap;
+
+use crate::QinpelSrv;
 
 static DEFAULT_HOST: &str = "localhost";
 static DEFAULT_PORT: u64 = 5490;
@@ -11,12 +13,17 @@ static DEFAULT_PORT: u64 = 5490;
 pub struct Head {
     pub debug: bool,
     pub verbose: bool,
-    pub host: String,
-    pub port: u64,
+    pub server_host: String,
+    pub server_port: u64,
+    pub serves_apps: bool,
+    pub serves_cmds: bool,
+    pub serves_sqls: bool,
+    pub serves_dirs: bool,
+    pub redirects: Option<HashMap<String, String>>
 }
 
 impl Head {
-    pub fn load(args: ArgMatches<'_>) -> Self {
+    pub fn load(qinpel_srv: QinpelSrv) -> Self {
         let mut setup_debug = false;
         let mut setup_verbose = false;
         let mut setup_host = String::from(DEFAULT_HOST);
@@ -53,24 +60,17 @@ impl Head {
                 _ => {}
             };
         }
-        if args.is_present("debug") {
-            setup_debug = true;
+        if let Some(debug) = qinpel_srv.debug  {
+            setup_debug = debug;
         }
-        if args.is_present("verbose") {
-            setup_verbose = true;
+        if let Some(verbose) = qinpel_srv.verbose {
+            setup_verbose = verbose;
         }
-        if args.is_present("host") {
-            setup_host = String::from(
-                args.value_of("host")
-                    .expect("Could not read the host argument."),
-            );
+        if let Some(server_host) = qinpel_srv.server_host {
+            setup_host = server_host;
         }
-        if args.is_present("port") {
-            setup_port = args
-                .value_of("port")
-                .expect("Could not read the port argument.")
-                .parse()
-                .expect("Could not parse the port argument.");
+        if let Some(server_port) = qinpel_srv.server_port {
+            setup_port = server_port;
         }
         if setup_debug {
             crate::DEBUG.store(true, Ordering::Relaxed);
@@ -81,8 +81,13 @@ impl Head {
         Head {
             debug: setup_debug,
             verbose: setup_verbose,
-            host: setup_host,
-            port: setup_port,
+            server_host: setup_host,
+            server_port: setup_port,
+            serves_apps: qinpel_srv.serves_apps,
+            serves_cmds: qinpel_srv.serves_cmds,
+            serves_sqls: qinpel_srv.serves_sqls,
+            serves_dirs: qinpel_srv.serves_dirs,
+            redirects: qinpel_srv.redirects,
         }
     }
 }

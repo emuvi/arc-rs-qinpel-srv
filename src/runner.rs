@@ -15,22 +15,12 @@ use super::utils;
 use super::SrvData;
 use super::SrvResult;
 
-#[get("/list/app")]
-pub async fn list_app(req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    lists::list_app(&req, &srv_data)
-}
-
-#[get("/run/app/*")]
-pub async fn run_app(req: HttpRequest) -> Result<NamedFile, Error> {
+#[get("/app/*")]
+pub async fn get_app(req: HttpRequest) -> Result<NamedFile, Error> {
     Ok(NamedFile::open(format!("./{}", req.match_info().path()))?)
 }
 
-#[get("/list/cmd")]
-pub async fn list_cmd(req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    lists::list_cmd(&req, &srv_data)
-}
-
-#[post("/run/cmd/*")]
+#[post("/cmd/*")]
 pub async fn run_cmd(
     run_params: Json<RunParams>,
     req: HttpRequest,
@@ -51,13 +41,8 @@ pub async fn run_cmd(
     precept::run_cmd(name, &run_params, &user, &srv_data.working_dir)
 }
 
-#[get("/list/dbs")]
-pub async fn list_dbs(req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    lists::list_dbs(&req, &srv_data)
-}
-
-#[post("/run/dbs/*")]
-pub async fn run_dbs(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
+#[post("/run/sql/*")]
+pub async fn run_sql(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
     let req_path = req.match_info().path();
     if req_path.len() < 10 {
         return Err(ErrorBadRequest(
@@ -75,8 +60,8 @@ pub async fn run_dbs(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvRe
     persist::run_dbs(&name, &utils::get_body(bytes)?, &srv_data).await
 }
 
-#[post("/ask/dbs/*")]
-pub async fn ask_dbs(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
+#[post("/ask/sql/*")]
+pub async fn ask_sql(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
     let req_path = req.match_info().path();
     if req_path.len() < 10 {
         return Err(ErrorBadRequest(
@@ -92,4 +77,19 @@ pub async fn ask_dbs(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvRe
         String::from(name)
     };
     persist::ask_dbs(&name, &utils::get_body(bytes)?, &srv_data).await
+}
+
+#[get("/list/apps")]
+pub async fn list_apps(req: HttpRequest, srv_data: SrvData) -> SrvResult {
+    lists::list_apps(&req, &srv_data)
+}
+
+#[get("/list/cmds")]
+pub async fn list_cmds(req: HttpRequest, srv_data: SrvData) -> SrvResult {
+    lists::list_cmds(&req, &srv_data)
+}
+
+#[get("/list/sqls")]
+pub async fn list_sqls(req: HttpRequest, srv_data: SrvData) -> SrvResult {
+    lists::list_sqls(&req, &srv_data)
 }
