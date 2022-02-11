@@ -1,3 +1,5 @@
+use qinpel_srv::QinServer;
+
 mod clip;
 
 #[actix_web::main]
@@ -34,16 +36,17 @@ async fn main() -> std::io::Result<()> {
     } else {
         None
     };
-    let server = qinpel_srv::QinServer::new(
-        arg_debug,
-        arg_verbose,
-        arg_host,
-        arg_port,
-        true,
-        true,
-        true,
-        true,
-        None,
-    );
+    let server = QinServer {
+        debug: arg_debug,
+        verbose: arg_verbose,
+        server_host: arg_host,
+        server_port: arg_port,
+        serves_apps: true,
+        serves_dirs: true,
+        serves_cmds: true,
+        serves_sqls: true,
+        serves_lizs: true,
+        redirects: None,
+    };
     qinpel_srv::start(server).await
 }

@@ -38,41 +38,16 @@ pub static DEBUG: AtomicBool = AtomicBool::new(false);
 pub static VERBOSE: AtomicBool = AtomicBool::new(false);
 
 pub struct QinServer {
-    debug: Option<bool>,
-    verbose: Option<bool>,
-    server_host: Option<String>,
-    server_port: Option<u64>,
-    serves_apps: bool,
-    serves_cmds: bool,
-    serves_sqls: bool,
-    serves_dirs: bool,
-    redirects: Option<HashMap<String, String>>,
-}
-
-impl QinServer {
-    pub fn new(
-        debug: Option<bool>,
-        verbose: Option<bool>,
-        server_host: Option<String>,
-        server_port: Option<u64>,
-        serves_apps: bool,
-        serves_cmds: bool,
-        serves_sqls: bool,
-        serves_dirs: bool,
-        redirects: Option<HashMap<String, String>>,
-    ) -> Self {
-        QinServer {
-            debug,
-            verbose,
-            server_host,
-            server_port,
-            serves_apps,
-            serves_cmds,
-            serves_sqls,
-            serves_dirs,
-            redirects,
-        }
-    }
+    pub debug: Option<bool>,
+    pub verbose: Option<bool>,
+    pub server_host: Option<String>,
+    pub server_port: Option<u64>,
+    pub serves_apps: bool,
+    pub serves_dirs: bool,
+    pub serves_cmds: bool,
+    pub serves_sqls: bool,
+    pub serves_lizs: bool,
+    pub redirects: Option<HashMap<String, String>>,
 }
 
 pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
