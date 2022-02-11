@@ -1,7 +1,7 @@
 use actix_web::error::ErrorForbidden;
 use actix_web::{HttpRequest, HttpResponse};
 use futures::executor;
-use liz::liz_paths;
+use liz::liz_execs;
 use serde::Deserialize;
 
 use std::io::{Read, Write};
@@ -28,7 +28,7 @@ pub fn run_cmd(
     working_dir: &str,
 ) -> SrvResult {
     let working_dir = Path::new(working_dir).to_owned();
-    let exec_name = format!("{}{}", cmd_name, liz_paths::exe_ext());
+    let exec_name = format!("{}{}", cmd_name, liz_execs::exe_ext());
     let full_exec = working_dir.join(&exec_name);
     let present_in_work_dir = full_exec.exists();
     let working_dir = if !present_in_work_dir {

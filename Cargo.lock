@@ -1411,7 +1411,7 @@ checksum = "7fb9b38af92608140b86b693604b9ffcc5824240a484d1ecd4795bacb2fe88f3"
 [[package]]
 name = "liz"
 version = "0.1.19"
-source = "git+https://github.com/emuvi/liz#d5baf256305233d5ae4861bef260ce59922bdbbc"
+source = "git+https://github.com/emuvi/liz#6afc81337fd8fbf107be63b978af7f7d90397257"
 dependencies = [
  "num_cpus",
  "reqwest",
