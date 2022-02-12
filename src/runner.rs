@@ -2,80 +2,61 @@ use actix_files::NamedFile;
 use actix_web::error::{Error, ErrorBadRequest};
 use actix_web::{
     get, post,
-    web::{Bytes, Json},
+    web::{Json, Path},
     HttpRequest,
 };
+use liz::liz_paths;
+use serde::Deserialize;
 
 use crate::guard;
 use crate::lists;
 use crate::persist;
-use crate::precept::{self, RunParams};
-use crate::utils;
+use crate::precept;
 use crate::SrvData;
 use crate::SrvResult;
 
-#[get("/app/*")]
-pub async fn get_app(req: HttpRequest) -> Result<NamedFile, Error> {
-    Ok(NamedFile::open(format!("./{}", req.match_info().path()))?)
+#[derive(Debug, Deserialize)]
+pub struct ArgsInputs {
+    pub args: Option<Vec<String>>,
+    pub inputs: Option<Vec<String>>,
 }
 
-#[post("/cmd/*")]
-pub async fn run_cmd(
-    run_params: Json<RunParams>,
+#[derive(Debug, Deserialize)]
+pub struct PathParams {
+    pub path: String,
+    pub params: Option<Vec<String>>,
+}
+
+#[get("/pub/*")]
+pub async fn get_pub(req: HttpRequest, srv_data: SrvData) -> Result<NamedFile, Error> {
+    let wd = &srv_data.working_dir;
+    let req_path = format!(".{}", req.match_info().path());
+    let file_path = liz_paths::path_join(wd, &req_path).map_err(|err| {
+        ErrorBadRequest(format!(
+            "Could not get the public file at {} because {}",
+            req_path, err
+        ))
+    })?;
+    Ok(NamedFile::open(file_path)?)
+}
+
+#[get("/app/{name}/*")]
+pub async fn get_app(
     req: HttpRequest,
+    name: Path<String>,
     srv_data: SrvData,
-) -> SrvResult {
-    let req_path = req.match_info().path();
-    if req_path.len() < 10 {
-        return Err(ErrorBadRequest(
-            "Your request must have a bigger command name.",
-        ));
-    }
-    let name = &req.match_info().path()[9..];
-    if req_path.starts_with(".") {
-        return Err(ErrorBadRequest("The command name can not starts with dot."));
-    }
+) -> Result<NamedFile, Error> {
     let user = guard::get_user_or_err(&req, &srv_data)?;
-    guard::check_cmd_access(name, &user)?;
-    precept::run_cmd(name, &run_params, &user, &srv_data.working_dir)
-}
-
-#[post("/run/sql/*")]
-pub async fn run_sql(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    let req_path = req.match_info().path();
-    if req_path.len() < 10 {
-        return Err(ErrorBadRequest(
-            "Your request must have a bigger data base source name.",
-        ));
-    }
-    let name = &req.match_info().path()[9..];
-    let user = guard::get_user_or_err(&req, &srv_data)?;
-    guard::check_sql_access(name, &user)?;
-    let name = if name == "default_dbs" {
-        format!("{}_default_dbs", user.name)
-    } else {
-        String::from(name)
-    };
-    persist::run_sql(&name, &utils::get_body(bytes)?, &srv_data).await
-}
-
-#[post("/ask/sql/*")]
-pub async fn ask_sql(bytes: Bytes, req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    let req_path = req.match_info().path();
-    if req_path.len() < 10 {
-        return Err(ErrorBadRequest(
-            "Your request must have a bigger data base source name.",
-        ));
-    }
-    let name = &req.match_info().path()[9..];
-    let user = guard::get_user_or_err(&req, &srv_data)?;
-    guard::check_sql_access(name, &user)?;
-    let name = if name == "default_dbs" {
-        format!("{}_default_dbs", user.name)
-    } else {
-        String::from(name)
-    };
-    persist::ask_sql(&name, &utils::get_body(bytes)?, &srv_data).await
+    guard::check_app_access(name.as_ref(), user)?;
+    let wd = &srv_data.working_dir;
+    let req_path = format!(".{}", req.match_info().path());
+    let file_path = liz_paths::path_join(wd, &req_path).map_err(|err| {
+        ErrorBadRequest(format!(
+            "Could not get the application file at {} because {}",
+            req_path, err
+        ))
+    })?;
+    Ok(NamedFile::open(file_path)?)
 }
 
 #[get("/list/apps")]
@@ -83,12 +64,69 @@ pub async fn list_apps(req: HttpRequest, srv_data: SrvData) -> SrvResult {
     lists::list_apps(&req, &srv_data)
 }
 
+#[post("/cmd/{name}")]
+pub async fn run_cmd(
+    req: HttpRequest,
+    name: Path<String>,
+    args_inputs: Json<ArgsInputs>,
+    srv_data: SrvData,
+) -> SrvResult {
+    let user = guard::get_user_or_err(&req, &srv_data)?;
+    guard::check_cmd_access(name.as_ref(), user)?;
+    precept::run_cmd(name.as_ref(), &args_inputs, &user, &srv_data.working_dir)
+}
+
 #[get("/list/cmds")]
 pub async fn list_cmds(req: HttpRequest, srv_data: SrvData) -> SrvResult {
     lists::list_cmds(&req, &srv_data)
 }
 
-#[get("/list/sqls")]
-pub async fn list_sqls(req: HttpRequest, srv_data: SrvData) -> SrvResult {
-    lists::list_sqls(&req, &srv_data)
+#[post("/run/sql/{bas_name}")]
+pub async fn run_sql(
+    req: HttpRequest,
+    bas_name: Path<String>,
+    path_params: Json<PathParams>,
+    srv_data: SrvData,
+) -> SrvResult {
+    let user = guard::get_user_or_err(&req, &srv_data)?;
+    guard::check_sql_access(&bas_name, &path_params.path, &user)?;
+    let bas_name: String = if bas_name.as_ref() == "default_dbs" {
+        format!("{}_default_dbs", user.name)
+    } else {
+        String::from(bas_name.as_ref())
+    };
+    persist::run_sql(&bas_name, &path_params, &srv_data).await
+}
+
+#[post("/ask/sql/{bas_name}")]
+pub async fn ask_sql(
+    req: HttpRequest,
+    bas_name: Path<String>,
+    path_params: Json<PathParams>,
+    srv_data: SrvData,
+) -> SrvResult {
+    let user = guard::get_user_or_err(&req, &srv_data)?;
+    guard::check_sql_access(&bas_name, &path_params.path, &user)?;
+    let bas_name: String = if bas_name.as_ref() == "default_dbs" {
+        format!("{}_default_dbs", user.name)
+    } else {
+        String::from(bas_name.as_ref())
+    };
+    persist::ask_sql(&bas_name, &path_params, &srv_data).await
+}
+
+#[get("/list/bases")]
+pub async fn list_bases(req: HttpRequest, srv_data: SrvData) -> SrvResult {
+    lists::list_bases(&req, &srv_data)
+}
+
+#[post("/run/liz")]
+pub async fn run_liz(
+    req: HttpRequest,
+    path_params: Json<PathParams>,
+    srv_data: SrvData,
+) -> SrvResult {
+    let user = guard::get_user_or_err(&req, &srv_data)?;
+    guard::check_liz_access(&path_params.path, &user)?;
+    precept::run_liz(&path_params)
 }

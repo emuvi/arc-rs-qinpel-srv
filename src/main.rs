@@ -5,9 +5,6 @@ mod clip;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let args = clip::parse();
-    if args.is_present("no-run") {
-        std::process::exit(0);
-    }
     let arg_debug = if args.is_present("debug") {
         Some(true)
     } else {
@@ -17,6 +14,14 @@ async fn main() -> std::io::Result<()> {
         Some(true)
     } else {
         None
+    };
+    let arg_name = if args.is_present("name") {
+        Some(String::from(
+            args.value_of("name")
+                .expect("Could not read the name argument."),
+        ))
+    } else {
+        Some("QinpelSrv".into())
     };
     let arg_host = if args.is_present("host") {
         Some(String::from(
@@ -36,16 +41,48 @@ async fn main() -> std::io::Result<()> {
     } else {
         None
     };
+    let arg_pubs = if args.is_present("pubs") {
+        Some(true)
+    } else {
+        None
+    };
+    let arg_apps = if args.is_present("apps") {
+        Some(true)
+    } else {
+        None
+    };
+    let arg_dirs = if args.is_present("dirs") {
+        Some(true)
+    } else {
+        None
+    };
+    let arg_cmds = if args.is_present("cmds") {
+        Some(true)
+    } else {
+        None
+    };
+    let arg_sqls = if args.is_present("sqls") {
+        Some(true)
+    } else {
+        None
+    };
+    let arg_lizs = if args.is_present("lizs") {
+        Some(true)
+    } else {
+        None
+    };
     let server = QinServer {
         debug: arg_debug,
         verbose: arg_verbose,
+        server_name: arg_name,
         server_host: arg_host,
         server_port: arg_port,
-        serves_apps: true,
-        serves_dirs: true,
-        serves_cmds: true,
-        serves_sqls: true,
-        serves_lizs: true,
+        serves_pubs: arg_pubs,
+        serves_apps: arg_apps,
+        serves_dirs: arg_dirs,
+        serves_cmds: arg_cmds,
+        serves_sqls: arg_sqls,
+        serves_lizs: arg_lizs,
         redirects: None,
     };
     qinpel_srv::start(server).await

@@ -20,21 +20,21 @@ impl Pool {
         }
     }
 
-    pub async fn run(&self, base: &Base, sql: &str) -> Result<u64, sqlx::Error> {
+    pub async fn run(&self, base: &Base, sql_source: &str) -> Result<u64, sqlx::Error> {
         self.check_new(base)?;
         let map_read = self.map.read().unwrap();
         let pool = map_read.get(&base.name).unwrap();
         let mut link = pool.acquire().await?; 
-        let result = sqlx::query(sql).execute(&mut link).await?;
+        let result = sqlx::query(sql_source).execute(&mut link).await?;
         Ok(result.rows_affected())
     }
 
-    pub async fn ask(&self, base: &Base, sql: &str) -> Result<String, sqlx::Error> {
+    pub async fn ask(&self, base: &Base, sql_source: &str) -> Result<String, sqlx::Error> {
         self.check_new(base)?;
         let map_read = self.map.read().unwrap();
         let pool = map_read.get(&base.name).unwrap();
         let mut link = pool.acquire().await?;
-        let mut result = sqlx::query(sql).fetch(&mut link);
+        let mut result = sqlx::query(sql_source).fetch(&mut link);
         let mut body = String::new();
         while let Some(row) = result.try_next().await? {
             let columns = row.columns();

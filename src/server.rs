@@ -1,4 +1,4 @@
-use actix_web::error::{ErrorNotFound};
+use actix_web::error::ErrorNotFound;
 use actix_web::{get, HttpRequest, HttpResponse};
 
 use super::precept;
@@ -7,7 +7,7 @@ use super::SrvResult;
 
 #[get("/ping")]
 pub async fn ping() -> HttpResponse {
-    HttpResponse::Ok().body("QinpelSrv pong.")
+    HttpResponse::Ok().body("pong")
 }
 
 #[get("/stop")]
@@ -22,11 +22,7 @@ pub async fn shut(req: HttpRequest, srv_data: SrvData) -> SrvResult {
 
 #[get("/version")]
 async fn version() -> HttpResponse {
-    HttpResponse::Ok().body(format!(
-        "{}{}",
-        "QinpelSrv version: ",
-        clap::crate_version!()
-    ))
+    HttpResponse::Ok().body(format!("{}{}", "v", env!("CARGO_PKG_VERSION")))
 }
 
 #[get("*")]
@@ -34,8 +30,13 @@ pub async fn redirect(req: HttpRequest, srv_data: SrvData) -> SrvResult {
     let path = req.path();
     if let Some(ref redirects) = srv_data.head.redirects {
         if let Some(redirect) = redirects.get(path) {
-            return Ok(HttpResponse::Found().header("Location", redirect.clone()).finish());
+            return Ok(HttpResponse::Found()
+                .header("Location", redirect.clone())
+                .finish());
         }
     }
-    Err(ErrorNotFound(format!("Could not found a resource for: {}", path)))
+    Err(ErrorNotFound(format!(
+        "Could not found a resource for: {}",
+        path
+    )))
 }

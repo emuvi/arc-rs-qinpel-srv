@@ -37,11 +37,26 @@ pub struct User {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Access {
-    APP { name: String },
-    CMD { name: String, params: Vec<String> },
-    DIR { path: String, write: bool },
-    SQL { name: String },
-    LIZ { file: bool, eval: bool },
+    APP {
+        name: String,
+    },
+    DIR {
+        path: String,
+        can_write: bool,
+    },
+    CMD {
+        name: String,
+        fixed_args: Vec<String>,
+    },
+    BAS {
+        name: String,
+    },
+    SQL {
+        path: String,
+    },
+    LIZ {
+        path: String,
+    },
 }
 
 pub type Bases = Vec<Base>;
@@ -50,6 +65,22 @@ pub type Bases = Vec<Base>;
 pub struct Base {
     pub name: String,
     pub info: String,
+}
+
+impl Base {
+    pub fn get_default_bas_name(for_user: &User) -> String {
+        format!("{}_default_dbs", for_user.name)
+    }
+
+    pub fn get_default_dbs_info(for_user: &User) -> String {
+        let default_dbs_file = "default_dbs.sdb";
+        let default_dbs_path =
+            liz_paths::path_join(&for_user.home, default_dbs_file).expect(&format!(
+                "Could not join the user home {} with default sql {}",
+                &for_user.home, default_dbs_file
+            ));
+        format!("sqlite://{}", default_dbs_path)
+    }
 }
 
 impl Body {
@@ -72,7 +103,7 @@ impl Body {
 
     fn init_working_dir() -> String {
         let current_dir =
-            std::env::current_dir().expect("Could not get the current working directory.");
+            std::env::current_dir().expect("Could not get the current working directory");
         format!("{}", current_dir.display())
     }
 
@@ -114,27 +145,20 @@ impl Body {
     fn init_bases(users: &Users) -> Bases {
         let bases_path = Path::new("bases.json");
         let mut bases = if bases_path.exists() {
-            serde_json::from_reader(File::open(bases_path).expect("Could not open the users file."))
-                .expect("Could not parse the users file.")
+            serde_json::from_reader(File::open(bases_path).expect("Could not open the bases file"))
+                .expect("Could not parse the bases file")
         } else {
             Bases::new()
         };
         for user in users {
-            let default_sql_name = format!("{}_default_sql", user.name);
-            let has_default_sql = &bases.iter().any(|base| &base.name == &default_sql_name);
-            if !has_default_sql {
-                let default_sql_file = "default_sql.sdb";
-                let default_sql_path =
-                    liz_paths::path_join(&user.home, default_sql_file).expect(&format!(
-                        "Could not join the user home {} with default sql {}",
-                        &user.home, default_sql_file
-                    ));
-                let default_sql_info = format!("sqlite://{}", default_sql_path);
-                let default_sql = Base {
-                    name: default_sql_name,
-                    info: default_sql_info,
+            let default_bas_name = Base::get_default_bas_name(user);
+            let has_default_dbs = &bases.iter().any(|base| &base.name == &default_bas_name);
+            if !has_default_dbs {
+                let default_dbs = Base {
+                    name: default_bas_name,
+                    info: Base::get_default_dbs_info(user),
                 };
-                bases.push(default_sql);
+                bases.push(default_dbs);
             }
         }
         bases

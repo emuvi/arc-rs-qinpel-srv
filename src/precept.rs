@@ -1,8 +1,7 @@
-use actix_web::error::ErrorForbidden;
+use actix_web::error::{ErrorForbidden, ErrorInternalServerError};
 use actix_web::{HttpRequest, HttpResponse};
 use futures::executor;
-use liz::liz_execs;
-use serde::Deserialize;
+use liz::{self, liz_debug, liz_execs};
 
 use std::io::{Read, Write};
 use std::path::Path;
@@ -12,18 +11,49 @@ use std::time::Duration;
 use crate::data::Access;
 use crate::data::User;
 use crate::guard;
+use crate::runner::{ArgsInputs, PathParams};
 use crate::SrvData;
 use crate::SrvResult;
 
-#[derive(Deserialize)]
-pub struct RunParams {
-    pub params: Vec<String>,
-    pub inputs: Vec<String>,
+static SLEEP_TO_SHUTDOWN: Duration = Duration::from_millis(1000);
+
+pub fn shut(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
+    if let Some(user) = guard::get_user(req, srv_data) {
+        if user.master {
+            let result = String::from("QinpelSrv is shutting...");
+            println!("{}", result);
+            std::thread::spawn(|| {
+                std::thread::sleep(SLEEP_TO_SHUTDOWN);
+                std::process::exit(0);
+            });
+            return Ok(HttpResponse::Ok().body(result));
+        }
+    }
+    Err(ErrorForbidden(
+        "You don't have access to call this resource.",
+    ))
+}
+
+pub fn stop(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
+    if let Some(user) = guard::get_user(req, srv_data) {
+        if user.master {
+            let data_server = srv_data.server.read().unwrap();
+            if let Some(server) = &*data_server {
+                let result = String::from("QinpelSrv is stopping..."); // TODO replace here and in all places with the server name.
+                println!("{}", result);
+                executor::block_on(server.stop(false));
+                return Ok(HttpResponse::Ok().body(result));
+            }
+        }
+    }
+    Err(ErrorForbidden(
+        "You don't have access to call this resource.",
+    ))
 }
 
 pub fn run_cmd(
     cmd_name: &str,
-    run_params: &RunParams,
+    args_inputs: &ArgsInputs,
     user: &User,
     working_dir: &str,
 ) -> SrvResult {
@@ -44,24 +74,25 @@ pub fn run_cmd(
     let mut cmd = Command::new(full_exec);
     cmd.current_dir(working_dir);
     for an_access in &user.access {
-        if let Access::CMD { name, params } = an_access {
+        if let Access::CMD { name, fixed_args } = an_access {
             if name == cmd_name {
-                for param in params {
-                    cmd.arg(param);
+                for arg in fixed_args {
+                    cmd.arg(arg);
                 }
             }
         }
     }
-    if run_params.params.len() > 0 {
-        for param in &run_params.params {
-            cmd.arg(param);
+    if let Some(args) = &args_inputs.args {
+        for arg in args {
+            cmd.arg(arg);
         }
     }
     let mut child = cmd.stdin(Stdio::piped()).stdout(Stdio::piped()).spawn()?;
-    if run_params.inputs.len() > 0 {
+    if let Some(inputs) = &args_inputs.inputs {
         let child_stdin = child.stdin.as_mut().unwrap();
-        for input in &run_params.inputs {
+        for input in inputs {
             child_stdin.write_all(input.as_bytes())?;
+            child_stdin.write_all("\n".as_bytes())?;
         }
     }
     let mut result = String::from("Output: ");
@@ -69,38 +100,19 @@ pub fn run_cmd(
     Ok(HttpResponse::Ok().body(result))
 }
 
-pub fn stop(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
-    if let Some(user) = guard::get_user(req, srv_data) {
-        if user.master {
-            let data_server = srv_data.server.read().unwrap();
-            if let Some(server) = &*data_server {
-                let result = String::from("QinpelSrv is stopping...");
-                println!("{}", result);
-                executor::block_on(server.stop(false));
-                return Ok(HttpResponse::Ok().body(result));
-            }
+pub fn run_liz(path_params: &PathParams) -> SrvResult {
+    let results = liz::run(&path_params.path, &path_params.params)
+        .map_err(|err| ErrorInternalServerError(liz_debug!(err, "run_liz", path_params)))?;
+    let mut body = String::from("[");
+    let mut first = true;
+    for result in results {
+        if first {
+            first = false;
+        } else {
+            body.push(',');
         }
+        body.push_str(&result);
     }
-    Err(ErrorForbidden(
-        "You don't have access to call this resource.",
-    ))
-}
-
-static SLEEP_TO_SHUTDOWN: Duration = Duration::from_millis(1000);
-
-pub fn shut(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
-    if let Some(user) = guard::get_user(req, srv_data) {
-        if user.master {
-            let result = String::from("QinpelSrv is shutting...");
-            println!("{}", result);
-            std::thread::spawn(|| {
-                std::thread::sleep(SLEEP_TO_SHUTDOWN);
-                std::process::exit(0);
-            });
-            return Ok(HttpResponse::Ok().body(result));
-        }
-    }
-    Err(ErrorForbidden(
-        "You don't have access to call this resource.",
-    ))
+    body.push(']');
+    Ok(HttpResponse::Ok().body(body))
 }

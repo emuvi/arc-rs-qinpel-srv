@@ -1,6 +1,8 @@
 /key
-/apps
-/cmds
+/pub
+/app
+/dir
+/cmd
 /target
 bases.json
 users.json

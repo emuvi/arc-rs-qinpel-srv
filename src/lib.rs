@@ -28,7 +28,6 @@ mod runner;
 mod server;
 mod servfs;
 mod setup;
-mod utils;
 
 type SrvData = web::Data<Arc<data::Body>>;
 type SrvError = actix_web::error::Error;
@@ -40,13 +39,15 @@ pub static VERBOSE: AtomicBool = AtomicBool::new(false);
 pub struct QinServer {
     pub debug: Option<bool>,
     pub verbose: Option<bool>,
+    pub server_name: Option<String>,
     pub server_host: Option<String>,
     pub server_port: Option<u64>,
-    pub serves_apps: bool,
-    pub serves_dirs: bool,
-    pub serves_cmds: bool,
-    pub serves_sqls: bool,
-    pub serves_lizs: bool,
+    pub serves_pubs: Option<bool>,
+    pub serves_apps: Option<bool>,
+    pub serves_dirs: Option<bool>,
+    pub serves_cmds: Option<bool>,
+    pub serves_sqls: Option<bool>,
+    pub serves_lizs: Option<bool>,
     pub redirects: Option<HashMap<String, String>>,
 }
 
@@ -55,7 +56,7 @@ pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
     let server_address = format!("{}:{}", setup.server_host, setup.server_port);
     let body = data::Body::new(setup);
     if body.head.verbose {
-        println!("QinpelSrv starting...");
+        println!("{} starting...", body.head.server_name);
         println!("Server head: {:?}", body.head);
         println!("Server has {} user(s).", body.users.len());
         println!("{:?}", body.users);
@@ -65,7 +66,7 @@ pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
     let data = Arc::new(body);
     let data_main = data.clone();
     let server = HttpServer::new(move || {
-        let app = App::new()
+        let server_app = App::new()
             .wrap_fn(|req, srv| {
                 let should_log = DEBUG.load(Ordering::Relaxed);
                 let log_req: Option<String> = if should_log {
@@ -82,7 +83,7 @@ pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
             })
             .wrap(if VERBOSE.load(Ordering::Relaxed) {
                 middleware::DefaultHeaders::new()
-                    .header("QinpelSrv-Version", clap::crate_version!())
+                    .header("version", env!("CARGO_PKG_VERSION"))
             } else {
                 middleware::DefaultHeaders::new()
             })
@@ -99,25 +100,18 @@ pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
             .service(server::shut)
             .service(server::version)
             .service(login::enter);
-        let app = if data.head.serves_apps {
-            app.service(runner::get_app).service(runner::list_apps)
+        let server_app = if data.head.serves_pubs {
+                server_app.service(runner::get_pub)
+            } else {
+                server_app
+            };
+        let server_app = if data.head.serves_apps {
+            server_app.service(runner::get_app).service(runner::list_apps)
         } else {
-            app
+            server_app
         };
-        let app = if data.head.serves_cmds {
-            app.service(runner::run_cmd).service(runner::list_cmds)
-        } else {
-            app
-        };
-        let app = if data.head.serves_sqls {
-            app.service(runner::run_sql)
-                .service(runner::ask_sql)
-                .service(runner::list_sqls)
-        } else {
-            app
-        };
-        let app = if data.head.serves_dirs {
-            app.service(servfs::dir_list)
+        let server_app = if data.head.serves_dirs {
+            server_app.service(servfs::dir_list)
                 .service(servfs::dir_new)
                 .service(servfs::dir_copy)
                 .service(servfs::dir_move)
@@ -129,9 +123,21 @@ pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
                 .service(servfs::file_move)
                 .service(servfs::file_del)
         } else {
-            app
+            server_app
         };
-        app.service(server::redirect)
+        let server_app = if data.head.serves_cmds {
+            server_app.service(runner::run_cmd).service(runner::list_cmds)
+        } else {
+            server_app
+        };
+        let server_app = if data.head.serves_sqls {
+            server_app.service(runner::run_sql)
+                .service(runner::ask_sql)
+                .service(runner::list_bases)
+        } else {
+            server_app
+        };
+        server_app.service(server::redirect)
     });
     let secure = secure_server();
     let runner = if let Some(config) = secure {
@@ -151,7 +157,6 @@ fn secure_server() -> Option<ServerConfig> {
     let cert_path = Path::new("key/cert.pem");
     let key_path = Path::new("key/key.pem");
     if cert_path.exists() && key_path.exists() {
-        println!("QinpelSrv securing...");
         let mut config = ServerConfig::new(NoClientAuth::new());
         let cert_file = &mut BufReader::new(File::open(cert_path).unwrap());
         let key_file = &mut BufReader::new(File::open(key_path).unwrap());

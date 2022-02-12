@@ -1,6 +1,6 @@
 use actix_web::{HttpRequest, HttpResponse};
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use crate::data::Access;
 use crate::guard;
@@ -10,7 +10,7 @@ use crate::SrvResult;
 
 pub fn list_apps(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 	let user = guard::get_user_or_err(req, srv_data)?;
-	let dirs = list_folder_dirs(Path::new("./apps").to_owned())?;
+	let dirs = list_folder_dirs(Path::new("./app"))?;
 	let mut body = String::new();
 	if user.master {
 		dirs.into_iter().for_each(|dir| {
@@ -35,7 +35,7 @@ pub fn list_apps(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 
 pub fn list_cmds(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 	let user = guard::get_user_or_err(req, srv_data)?;
-	let dirs = list_folder_dirs(Path::new("./cmds").to_owned())?;
+	let dirs = list_folder_dirs(Path::new("./cmd"))?;
 	let mut body = String::new();
 	if user.master {
 		dirs.into_iter().for_each(|dir| {
@@ -45,7 +45,7 @@ pub fn list_cmds(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 	} else {
 		for user_access in &user.access {
 			match user_access {
-				Access::CMD { name, params: _ } => {
+				Access::CMD { name, fixed_args: _ } => {
 					if dirs.contains(name) {
 						body.push_str(name);
 						body.push_str("\n");
@@ -58,7 +58,7 @@ pub fn list_cmds(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 	Ok(HttpResponse::Ok().body(body))
 }
 
-fn list_folder_dirs(folder: PathBuf) -> Result<Vec<String>, SrvError> {
+fn list_folder_dirs(folder: &Path) -> Result<Vec<String>, SrvError> {
 	let mut result = Vec::new();
 	if folder.exists() {
 		for entry in folder.read_dir()? {
@@ -76,15 +76,15 @@ fn list_folder_dirs(folder: PathBuf) -> Result<Vec<String>, SrvError> {
 	Ok(result)
 }
 
-pub fn list_sqls(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
+pub fn list_bases(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 	let user = guard::get_user_or_err(req, srv_data)?;
 	if user.master {
-		return list_all_sqls(srv_data);
+		return list_all_bases(srv_data);
 	}
 	let mut body = String::new();
 	for user_access in &user.access {
 		match user_access {
-			Access::SQL { name } => {
+			Access::BAS { name } => {
 				body.push_str(name);
 				body.push_str("\n");
 			}
@@ -94,7 +94,7 @@ pub fn list_sqls(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 	Ok(HttpResponse::Ok().body(body))
 }
 
-fn list_all_sqls(srv_data: &SrvData) -> SrvResult {
+fn list_all_bases(srv_data: &SrvData) -> SrvResult {
 	let mut body = String::new();
 	let bases = &srv_data.bases;
 	for base in bases {
