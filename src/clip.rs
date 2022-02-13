@@ -3,8 +3,8 @@ use clap::{App, Arg, ArgMatches};
 pub fn parse<'a>() -> ArgMatches<'a> {
     App::new("QinpelSrv")
     .version(env!("CARGO_PKG_VERSION"))
+    .about("QinpelSrv (Qinpel Server) is a library and a command program that servers public files, graphical user interfaces, file system access with authorization, command programs dispatchs, databases queries and Liz functionality with scripts. It is the base of the Pointel platform and the backend of the Qinpel, the Quick Interface for Power Intelligence.")
     .author("Éverton M. Vieira <everton.muvi@gmail.com>")
-    .about("QinpelSrv ( Qinpel Server ) is a library and a command program that servers public files, graphical user interfaces, file system access with authorization, command programs dispatchs, databases queries and Liz functionality with scripts. It is the base of the Pointel platform and the backend of the Qinpel, the Quick Interface for Power Intelligence.")
     .arg(
       Arg::with_name("debug")
         .short("g")
