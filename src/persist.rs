@@ -1,6 +1,6 @@
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError};
 use actix_web::HttpResponse;
-use liz::liz_debug;
+use liz::{liz_debug, liz_texts};
 
 use crate::data::Base;
 use crate::runner::PathParams;
@@ -46,3 +46,10 @@ fn get_base<'a>(bas_name: &str, srv_data: &'a SrvData) -> Result<&'a Base, SrvEr
     )))
 }
 
+fn get_source(path_params: &PathParams) -> Result<String, SrvError> {
+    let path = &path_params.path;
+    let source =
+        liz_texts::read(path).map_err(|err| ErrorBadRequest(liz_debug!(err, "read", path)))?;
+    // TODO string interpolation - use the liz source feature to do
+    Ok(String::default())
+}
