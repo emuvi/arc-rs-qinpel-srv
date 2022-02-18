@@ -1403,7 +1403,8 @@ checksum = "7fb9b38af92608140b86b693604b9ffcc5824240a484d1ecd4795bacb2fe88f3"
 [[package]]
 name = "liz"
 version = "0.1.22"
-source = "git+https://github.com/emuvi/liz#ca512dc6076a3fc7935b3bc2e7e7f8ecfc337efa"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9cf60d075b067bf896ff18615b6fde95b64d8c454aa7ec9c8a1d281cc54bc425"
 dependencies = [
  "num_cpus",
  "regex",
@@ -3344,9 +3345,9 @@ dependencies = [
 
 [[package]]
 name = "zeroize_derive"
-version = "1.3.1"
+version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81e8f13fef10b63c06356d65d416b070798ddabcadc10d3ece0c5be9b3c7eddb"
+checksum = "3f8f187641dad4f680d25c4bfc4225b418165984179f26ca76ec4fb6441d3a17"
 dependencies = [
  "proc-macro2",
  "quote",
