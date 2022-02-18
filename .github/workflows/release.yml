@@ -17,9 +17,9 @@ jobs:
       - name: Build
         run: |
           cargo build --all --release --target x86_64-apple-darwin
-          strip target/x86_64-apple-darwin/release/liz
+          strip target/x86_64-apple-darwin/release/qinpel-srv
           mkdir -p release
-          tar -C ./target/x86_64-apple-darwin/release/ -czvf ./release/mac_64_liz.tar.gz ./liz
+          tar -C ./target/x86_64-apple-darwin/release/ -czvf ./release/mac_64_qinpel-srv.tar.gz ./qinpel-srv
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -48,9 +48,9 @@ jobs:
       - name: Build
         run: |
           cargo build --all --release --target x86_64-unknown-linux-gnu
-          strip target/x86_64-unknown-linux-gnu/release/liz
+          strip target/x86_64-unknown-linux-gnu/release/qinpel-srv
           mkdir -p release
-          tar -C ./target/x86_64-unknown-linux-gnu/release/ -czvf ./release/lin_64_liz.tar.gz ./liz
+          tar -C ./target/x86_64-unknown-linux-gnu/release/ -czvf ./release/lin_64_qinpel-srv.tar.gz ./qinpel-srv
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -88,9 +88,9 @@ jobs:
       - name: Build
         run: |
           cargo build --all --release --target i686-unknown-linux-gnu
-          strip target/i686-unknown-linux-gnu/release/liz
+          strip target/i686-unknown-linux-gnu/release/qinpel-srv
           mkdir -p release
-          tar -C ./target/i686-unknown-linux-gnu/release/ -czvf ./release/lin_32_liz.tar.gz ./liz
+          tar -C ./target/i686-unknown-linux-gnu/release/ -czvf ./release/lin_32_qinpel-srv.tar.gz ./qinpel-srv
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -120,7 +120,7 @@ jobs:
         run: |
           cargo build --all --release --target x86_64-pc-windows-msvc
           mkdir -p release
-          tar -C ./target/x86_64-pc-windows-msvc/release/ -czvf ./release/win_64_liz.tar.gz ./liz.exe
+          tar -C ./target/x86_64-pc-windows-msvc/release/ -czvf ./release/win_64_qinpel-srv.tar.gz ./qinpel-srv.exe
 
       - name: Release
         uses: softprops/action-gh-release@v1
@@ -150,7 +150,7 @@ jobs:
         run: |
           cargo build --all --release --target i686-pc-windows-msvc
           mkdir -p release
-          tar -C ./target/i686-pc-windows-msvc/release/ -czvf ./release/win_32_liz.tar.gz ./liz.exe
+          tar -C ./target/i686-pc-windows-msvc/release/ -czvf ./release/win_32_qinpel-srv.tar.gz ./qinpel-srv.exe
 
       - name: Release
         uses: softprops/action-gh-release@v1

@@ -176,9 +176,9 @@ impl Head {
         }
         if let Some(server_redirects) = qinpel_srv.redirects {
             if let Some(ref mut redirects) = setup_redirects {
-                server_redirects.into_iter().map(|(origin, destiny)| {
+                for (origin, destiny) in server_redirects {
                     redirects.insert(origin, destiny);
-                });
+                }
             } else {
                 setup_redirects = Some(server_redirects);
             }
