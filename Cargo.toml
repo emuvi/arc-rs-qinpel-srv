@@ -19,4 +19,4 @@ rand = "0.8"
 base64 = "0.13"
 sqlx = { version = "0.5", features = [ "runtime-tokio-rustls", "all"] }
 futures = "0.3"
-liz = { git = "https://github.com/emuvi/liz" }
+liz = { version = "0.1.22", git = "https://github.com/emuvi/liz" }
