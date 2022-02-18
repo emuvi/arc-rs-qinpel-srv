@@ -20,7 +20,8 @@ static SLEEP_TO_SHUTDOWN: Duration = Duration::from_millis(1000);
 pub fn shut(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
     if let Some(user) = guard::get_user(req, srv_data) {
         if user.master {
-            let result = String::from("QinpelSrv is shutting...");
+            let name = &srv_data.head.server_name;
+            let result = format!("{} is shutting...", name);
             println!("{}", result);
             std::thread::spawn(|| {
                 std::thread::sleep(SLEEP_TO_SHUTDOWN);
@@ -39,7 +40,8 @@ pub fn stop(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
         if user.master {
             let data_server = srv_data.server.read().unwrap();
             if let Some(server) = &*data_server {
-                let result = String::from("QinpelSrv is stopping..."); // TODO replace here and in all places with the server name.
+                let name = &srv_data.head.server_name;
+                let result = format!("{} is stopping...", name);
                 println!("{}", result);
                 executor::block_on(server.stop(false));
                 return Ok(HttpResponse::Ok().body(result));

@@ -5,7 +5,7 @@ use actix_web::{
     web::{Json, Path},
     HttpRequest,
 };
-use liz::liz_paths;
+use liz::{liz_debug, liz_paths};
 use serde::Deserialize;
 
 use crate::guard;
@@ -29,14 +29,10 @@ pub struct PathParams {
 
 #[get("/pub/*")]
 pub async fn get_pub(req: HttpRequest, srv_data: SrvData) -> Result<NamedFile, Error> {
-    let wd = &srv_data.working_dir;
+    let working_dir = &srv_data.working_dir;
     let req_path = format!(".{}", req.match_info().path());
-    let file_path = liz_paths::path_join(wd, &req_path).map_err(|err| {
-        ErrorBadRequest(format!(
-            "Could not get the public file at {} because {}",
-            req_path, err
-        ))
-    })?;
+    let file_path = liz_paths::path_join(working_dir, &req_path)
+        .map_err(|err| ErrorBadRequest(liz_debug!(err, "path_join", working_dir, req_path)))?;
     Ok(NamedFile::open(file_path)?)
 }
 
@@ -48,14 +44,10 @@ pub async fn get_app(
 ) -> Result<NamedFile, Error> {
     let user = guard::get_user_or_err(&req, &srv_data)?;
     guard::check_app_access(name.as_ref(), user)?;
-    let wd = &srv_data.working_dir;
+    let working_dir = &srv_data.working_dir;
     let req_path = format!(".{}", req.match_info().path());
-    let file_path = liz_paths::path_join(wd, &req_path).map_err(|err| {
-        ErrorBadRequest(format!(
-            "Could not get the application file at {} because {}",
-            req_path, err
-        ))
-    })?;
+    let file_path = liz_paths::path_join(working_dir, &req_path)
+        .map_err(|err| ErrorBadRequest(liz_debug!(err, "path_join", working_dir, req_path)))?;
     Ok(NamedFile::open(file_path)?)
 }
 
