@@ -3,8 +3,14 @@ on: [push]
 jobs:
   mac-64:
     runs-on: macos-latest
-    if: "contains(github.event.head_commit.message, '[Release]')"
+    if: "startsWith(github.event.head_commit.message, 'release-version')"
     steps:
+      - uses: rishabhgupta/split-by@v1
+        id: split
+        with:
+          string: ${{ github.event.head_commit.message }}
+          split-by: "-"
+
       - uses: actions/checkout@v2
       
       - name: Install
@@ -24,8 +30,8 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          name: Release ${{ github.ref }}
+          tag_name: v${{ steps.split.outputs._2 }}
+          name: Release version ${{ steps.split.outputs._2 }}
           draft: true
           files: ./release/*.tar.gz
         env:
@@ -33,8 +39,14 @@ jobs:
   
   lin-64:
     runs-on: ubuntu-latest
-    if: "contains(github.event.head_commit.message, '[Release]')"
+    if: "startsWith(github.event.head_commit.message, 'release-version')"
     steps:
+      - uses: rishabhgupta/split-by@v1
+        id: split
+        with:
+          string: ${{ github.event.head_commit.message }}
+          split-by: "-"
+
       - uses: actions/checkout@v2
       
       - name: Install
@@ -54,8 +66,8 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          name: Release ${{ github.ref }}
+          tag_name: v${{ steps.split.outputs._2 }}
+          name: Release version ${{ steps.split.outputs._2 }}
           draft: true
           files: ./release/*.tar.gz
         env:
@@ -63,8 +75,14 @@ jobs:
 
   win-64:
     runs-on: windows-latest
-    if: "contains(github.event.head_commit.message, '[Release]')"
+    if: "startsWith(github.event.head_commit.message, 'release-version')"
     steps:
+      - uses: rishabhgupta/split-by@v1
+        id: split
+        with:
+          string: ${{ github.event.head_commit.message }}
+          split-by: "-"
+
       - uses: actions/checkout@v2
       
       - name: Install
@@ -83,8 +101,8 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ github.ref }}
-          name: Release ${{ github.ref }}
+          tag_name: v${{ steps.split.outputs._2 }}
+          name: Release version ${{ steps.split.outputs._2 }}
           draft: true
           files: ./release/*.tar.gz
         env:
