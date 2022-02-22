@@ -1,6 +1,12 @@
 {
-    "serverDebug": true,
-    "serverVerbose": true,
-    "serverHost": "0.0.0.0",
-    "serverPort": 5490
+  "serverDebug": false,
+  "serverVerbose": false,
+  "serverHost": "0.0.0.0",
+  "serverPort": 5490,
+  "servesPUBs": true,
+  "servesAPPs": true,
+  "servesDIRs": true,
+  "servesCMDs": true,
+  "servesSQLs": true,
+  "servesLIZs": true
 }

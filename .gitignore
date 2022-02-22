@@ -3,6 +3,8 @@
 /app
 /dir
 /cmd
+/sql
+/liz
 /target
 bases.json
 users.json

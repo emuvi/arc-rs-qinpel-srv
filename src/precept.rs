@@ -104,7 +104,7 @@ pub fn run_cmd(
 
 pub fn run_liz(path_params: &PathParams) -> SrvResult {
     let results = liz::run(&path_params.path, &path_params.params)
-        .map_err(|err| ErrorInternalServerError(liz_debug!(err, "run_liz", path_params)))?;
+        .map_err(|err| ErrorInternalServerError(liz_debug!(err, "run", path_params)))?;
     let mut body = String::from("[");
     let mut first = true;
     for result in results {
