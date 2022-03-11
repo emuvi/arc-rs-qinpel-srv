@@ -1,7 +1,7 @@
 use actix_files::NamedFile;
 use actix_web::error::{Error, ErrorBadRequest};
 use actix_web::{get, post, web::Json, HttpRequest};
-use liz::{liz_debug, liz_paths};
+use liz::{liz_dbg_errs, liz_paths};
 use serde::Deserialize;
 
 use crate::guard;
@@ -28,7 +28,7 @@ pub async fn get_pub(req: HttpRequest, srv_data: SrvData) -> Result<NamedFile, E
     let working_dir = &srv_data.working_dir;
     let req_path = format!(".{}", req.match_info().path());
     let file_path = liz_paths::path_join(working_dir, &req_path)
-        .map_err(|err| ErrorBadRequest(liz_debug!(err, "path_join", working_dir, req_path)))?;
+        .map_err(|err| ErrorBadRequest(liz_dbg_errs!(err, working_dir, req_path)))?;
     Ok(NamedFile::open(file_path)?)
 }
 
@@ -39,7 +39,7 @@ pub async fn get_app(req: HttpRequest, srv_data: SrvData) -> Result<NamedFile, E
         .split("/")
         .nth(2)
         .ok_or("Could not found the app name")
-        .map_err(|err| ErrorBadRequest(liz_debug!(err, "split", path)))?;
+        .map_err(|err| ErrorBadRequest(liz_dbg_errs!(err, path)))?;
     if app_name != "qinpel-app" {
         let user = guard::get_user_or_err(&req, &srv_data)?;
         guard::check_app_access(app_name, user)?;
@@ -47,7 +47,7 @@ pub async fn get_app(req: HttpRequest, srv_data: SrvData) -> Result<NamedFile, E
     let working_dir = &srv_data.working_dir;
     let req_path = format!(".{}", req.match_info().path());
     let file_path = liz_paths::path_join(working_dir, &req_path)
-        .map_err(|err| ErrorBadRequest(liz_debug!(err, "path_join", working_dir, req_path)))?;
+        .map_err(|err| ErrorBadRequest(liz_dbg_errs!(err, working_dir, req_path)))?;
     Ok(NamedFile::open(file_path)?)
 }
 
@@ -68,7 +68,7 @@ pub async fn run_cmd(
         .split("/")
         .nth(2)
         .ok_or("Could not found the cmd name")
-        .map_err(|err| ErrorBadRequest(liz_debug!(err, "split", path)))?;
+        .map_err(|err| ErrorBadRequest(liz_dbg_errs!(err, path)))?;
     guard::check_cmd_access(cmd_name, user)?;
     precept::run_cmd(cmd_name, &args_inputs, &user, &srv_data.working_dir)
 }
@@ -90,7 +90,7 @@ pub async fn run_sql(
         .split("/")
         .nth(3)
         .ok_or("Could not found the cmd name")
-        .map_err(|err| ErrorBadRequest(liz_debug!(err, "split", path)))?;
+        .map_err(|err| ErrorBadRequest(liz_dbg_errs!(err, path)))?;
     
     guard::check_sql_access(&base_name, &path_params.path, &user)?;
     let base_name = if base_name == "default_dbs" {
@@ -113,7 +113,7 @@ pub async fn ask_sql(
         .split("/")
         .nth(3)
         .ok_or("Could not found the cmd name")
-        .map_err(|err| ErrorBadRequest(liz_debug!(err, "split", path)))?;
+        .map_err(|err| ErrorBadRequest(liz_dbg_errs!(err, path)))?;
     
     guard::check_sql_access(&base_name, &path_params.path, &user)?;
     let base_name = if base_name == "default_dbs" {

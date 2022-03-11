@@ -2,7 +2,7 @@ use actix_files::NamedFile;
 use actix_web::error::{Error, ErrorBadRequest};
 use actix_web::HttpResponse;
 use base64;
-use liz::liz_debug;
+use liz::liz_dbg_errs;
 
 use std::fs::File;
 use std::fs::OpenOptions;
@@ -38,11 +38,8 @@ pub fn append(path: &str, base64: bool, data: &str) -> SrvResult {
 fn write_data(mut file: File, base64: bool, data: &str) -> Result<(), Error> {
     if base64 {
         let bytes = base64::decode(data);
-        if bytes.is_err() {
-            return Err(ErrorBadRequest(liz_debug!(
-                "Could not decode de base 64 data",
-                "decode"
-            )));
+        if let Err(err) = bytes {
+            return Err(ErrorBadRequest(liz_dbg_errs!(err)));
         }
         let bytes = bytes.unwrap();
         file.write_all(&bytes)?;
@@ -55,16 +52,14 @@ fn write_data(mut file: File, base64: bool, data: &str) -> Result<(), Error> {
 pub fn copy(origin: &str, destiny: &str) -> SrvResult {
     let origin_pathed = Path::new(origin);
     if !origin_pathed.exists() {
-        return Err(ErrorBadRequest(liz_debug!(
+        return Err(ErrorBadRequest(liz_dbg_errs!(
             "The origin to copy does not exists",
-            "exists",
             origin
         )));
     }
     if !origin_pathed.is_file() {
-        return Err(ErrorBadRequest(liz_debug!(
+        return Err(ErrorBadRequest(liz_dbg_errs!(
             "The origin to copy is not a file",
-            "is_file",
             origin
         )));
     }
@@ -75,16 +70,14 @@ pub fn copy(origin: &str, destiny: &str) -> SrvResult {
 pub fn mov(origin: &str, destiny: &str) -> SrvResult {
     let origin_pathed = Path::new(origin);
     if !origin_pathed.exists() {
-        return Err(ErrorBadRequest(liz_debug!(
+        return Err(ErrorBadRequest(liz_dbg_errs!(
             "The origin to move does not exists",
-            "exists",
             origin
         )));
     }
     if !origin_pathed.is_file() {
-        return Err(ErrorBadRequest(liz_debug!(
+        return Err(ErrorBadRequest(liz_dbg_errs!(
             "The origin to move is not a file",
-            "is_file",
             origin
         )));
     }
@@ -96,15 +89,15 @@ pub fn mov(origin: &str, destiny: &str) -> SrvResult {
 pub fn del(path: &str) -> SrvResult {
     let pathed = Path::new(path);
     if !pathed.exists() {
-        return Err(ErrorBadRequest(liz_debug!(
+        return Err(ErrorBadRequest(liz_dbg_errs!(
             "The path to delete does not exists",
-            "exists"
+            path
         )));
     }
     if !pathed.is_file() {
-        return Err(ErrorBadRequest(liz_debug!(
+        return Err(ErrorBadRequest(liz_dbg_errs!(
             "The path to delete is not a file",
-            "is_file"
+            path
         )));
     }
     std::fs::remove_file(&path)?;

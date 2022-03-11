@@ -1,6 +1,6 @@
 use actix_web::error::ErrorNotFound;
 use actix_web::{get, HttpRequest, HttpResponse};
-use liz::liz_debug;
+use liz::liz_dbg_errs;
 
 use super::precept;
 use super::SrvData;
@@ -36,9 +36,8 @@ pub async fn redirect(req: HttpRequest, srv_data: SrvData) -> SrvResult {
                 .finish());
         }
     }
-    Err(ErrorNotFound(liz_debug!(
+    Err(ErrorNotFound(liz_dbg_errs!(
         "Could not found a resource",
-        "srv_data.head.redirects",
         path
     )))
 }

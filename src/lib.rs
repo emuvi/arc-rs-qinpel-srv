@@ -4,7 +4,7 @@ pub use liz;
 use actix_web::dev::Service;
 use actix_web::{middleware, web, App, HttpResponse, HttpServer};
 use futures::future::FutureExt;
-use liz::liz_debug;
+use liz::liz_dbg_errs;
 use rustls::internal::pemfile::{certs, pkcs8_private_keys};
 use rustls::{NoClientAuth, ServerConfig};
 
@@ -91,7 +91,7 @@ pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
             .app_data(web::JsonConfig::default().error_handler(|err, _req| {
                 actix_web::error::InternalError::from_response(
                     "",
-                    HttpResponse::BadRequest().body(liz_debug!(err, "to_json")),
+                    HttpResponse::BadRequest().body(liz_dbg_errs!(err)),
                 )
                 .into()
             }))

@@ -1,23 +1,21 @@
 use actix_web::error::ErrorBadRequest;
 use actix_web::HttpResponse;
-use liz::liz_debug;
+use liz::liz_dbg_errs;
 
-use std::path::Path;
 use crate::SrvResult;
+use std::path::Path;
 
 pub fn list(path: &str) -> SrvResult {
     let pathed = Path::new(path);
     if !pathed.exists() {
-        return Err(ErrorBadRequest(liz_debug!(
+        return Err(ErrorBadRequest(liz_dbg_errs!(
             "The path to list does not exists",
-            "exists",
             path
         )));
     }
     if !pathed.is_dir() {
-        return Err(ErrorBadRequest(liz_debug!(
+        return Err(ErrorBadRequest(liz_dbg_errs!(
             "The path to list is not a directory",
-            "is_dir",
             path
         )));
     }
@@ -47,16 +45,14 @@ pub fn new(path: &str) -> SrvResult {
 pub fn copy(origin: &str, destiny: &str) -> SrvResult {
     let origin_pathed = Path::new(origin);
     if !origin_pathed.exists() {
-        return Err(ErrorBadRequest(liz_debug!(
+        return Err(ErrorBadRequest(liz_dbg_errs!(
             "The origin to copy does not exists",
-            "exists",
             origin
         )));
     }
     if !origin_pathed.is_dir() {
-        return Err(ErrorBadRequest(liz_debug!(
+        return Err(ErrorBadRequest(liz_dbg_errs!(
             "The origin to copy is not a directory",
-            "is_dir",
             origin
         )));
     }
@@ -81,16 +77,14 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> std::io::Result
 pub fn mov(origin: &str, destiny: &str) -> SrvResult {
     let origin_pathed = Path::new(origin);
     if !origin_pathed.exists() {
-        return Err(ErrorBadRequest(liz_debug!(
+        return Err(ErrorBadRequest(liz_dbg_errs!(
             "The origin to move does not exists",
-            "exists",
             origin
         )));
     }
     if !origin_pathed.is_dir() {
-        return Err(ErrorBadRequest(liz_debug!(
+        return Err(ErrorBadRequest(liz_dbg_errs!(
             "The origin to move is not a directory",
-            "is_dir",
             origin
         )));
     }
@@ -102,15 +96,15 @@ pub fn mov(origin: &str, destiny: &str) -> SrvResult {
 pub fn del(path: &str) -> SrvResult {
     let pathed = Path::new(path);
     if !pathed.exists() {
-        return Err(ErrorBadRequest(liz_debug!(
+        return Err(ErrorBadRequest(liz_dbg_errs!(
             "The path to delete does not exists",
-            "exists"
+            path
         )));
     }
     if !pathed.is_dir() {
-        return Err(ErrorBadRequest(liz_debug!(
+        return Err(ErrorBadRequest(liz_dbg_errs!(
             "The path to delete is not a directory",
-            "is_dir"
+            path
         )));
     }
     std::fs::remove_dir_all(path)?;

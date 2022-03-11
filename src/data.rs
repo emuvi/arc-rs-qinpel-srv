@@ -1,5 +1,5 @@
 use actix_web::dev::Server;
-use liz::{liz_debug, liz_paths};
+use liz::{liz_dbg_errs, liz_paths};
 use serde::{Deserialize, Serialize};
 use serde_json;
 
@@ -75,9 +75,8 @@ impl Base {
     pub fn get_default_dbs_info(for_user: &User) -> String {
         let default_dbs_file = "default_dbs.sdb";
         let default_dbs_path =
-            liz_paths::path_join(&for_user.home, default_dbs_file).expect(&liz_debug!(
+            liz_paths::path_join(&for_user.home, default_dbs_file).expect(&liz_dbg_errs!(
                 "Could not join the user home with default sql",
-                "path_join",
                 &for_user.home,
                 &default_dbs_file
             ));
@@ -133,17 +132,13 @@ impl Body {
                 user.home = format!("./dir/{}", user.name);
             }
             user.home =
-                liz_paths::path_join_if_relative(working_dir, &user.home).expect(&liz_debug!(
+                liz_paths::path_join_if_relative(working_dir, &user.home).expect(&liz_dbg_errs!(
                     "Could not join the working dir with the home",
-                    "path_join_if_relative",
                     working_dir,
                     user.home
                 ));
-            std::fs::create_dir_all(&user.home).expect(&liz_debug!(
-                "Could not create the home dir",
-                "create_dir_all",
-                user.home
-            ));
+            std::fs::create_dir_all(&user.home)
+                .expect(&liz_dbg_errs!("Could not create the home dir", user.home));
         }
         users
     }

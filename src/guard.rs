@@ -1,10 +1,10 @@
 use actix_web::error::{Error, ErrorForbidden};
 use actix_web::HttpRequest;
-use liz::liz_debug;
+use liz::liz_dbg_errs;
 
 use crate::data::Access;
-use crate::data::User;
 use crate::data::Base;
+use crate::data::User;
 use crate::SrvData;
 
 pub fn get_user<'a>(req: &HttpRequest, srv_data: &'a SrvData) -> Option<&'a User> {
@@ -77,11 +77,10 @@ pub fn check_app_access(app_name: &str, for_user: &User) -> Result<(), Error> {
             }
         }
     }
-    Err(ErrorForbidden(liz_debug!(
-		"You do not have access to call this resource",
-		"check_app_access",
-		app_name
-	)))
+    Err(ErrorForbidden(liz_dbg_errs!(
+        "You do not have access to call this resource",
+        app_name
+    )))
 }
 
 pub fn check_dir_access(
@@ -93,9 +92,8 @@ pub fn check_dir_access(
     if check_dir_resource(path_ref, &path_dest, resource, for_user) {
         return Ok(());
     } else {
-        return Err(ErrorForbidden(liz_debug!(
+        return Err(ErrorForbidden(liz_dbg_errs!(
             "You do not have access to call this resource",
-            "check_dir_resource",
             path_ref,
             path_dest,
             resource
@@ -145,7 +143,10 @@ fn check_dir_resource(
     } else if resource == "/file/del" {
         return check_dir_write(&path_ref, &for_user);
     } else {
-        eprintln!("[SYSTEM ERROR] We got an unknown resource to check the directory access: {}", resource)
+        eprintln!(
+            "[SYSTEM ERROR] We got an unknown resource to check the directory access: {}",
+            resource
+        )
     }
     false
 }
@@ -177,18 +178,21 @@ pub fn check_cmd_access(cmd_name: &str, for_user: &User) -> Result<(), Error> {
         return Ok(());
     } else {
         for user_access in &for_user.access {
-            if let Access::CMD { name, fixed_args: _ } = user_access {
+            if let Access::CMD {
+                name,
+                fixed_args: _,
+            } = user_access
+            {
                 if cmd_name == name {
                     return Ok(());
                 }
             }
         }
     }
-    Err(ErrorForbidden(liz_debug!(
-		"You do dot have access to call this resource",
-		"check_cmd_access",
-		cmd_name
-	)))
+    Err(ErrorForbidden(liz_dbg_errs!(
+        "You do dot have access to call this resource",
+        cmd_name
+    )))
 }
 
 pub fn check_sql_access(bas_name: &str, sql_path: &str, for_user: &User) -> Result<(), Error> {
@@ -205,27 +209,25 @@ pub fn check_sql_access(bas_name: &str, sql_path: &str, for_user: &User) -> Resu
         }
     }
     if !has_dbs_access {
-        return Err(ErrorForbidden(liz_debug!(
+        return Err(ErrorForbidden(liz_dbg_errs!(
             "You do not have access to call this resource",
-            "check_sql_access",
             bas_name
-        )))
+        )));
     }
     let mut has_sql_access = false;
     for user_access in &for_user.access {
         if let Access::SQL { path } = user_access {
-            if sql_path.starts_with(path)  {
+            if sql_path.starts_with(path) {
                 has_sql_access = true;
                 break;
             }
         }
     }
     if !has_sql_access {
-        return Err(ErrorForbidden(liz_debug!(
+        return Err(ErrorForbidden(liz_dbg_errs!(
             "You don't have access to call this resource",
-            "check_sql_access",
             sql_path
-        )))
+        )));
     }
     Ok(())
 }
@@ -241,9 +243,8 @@ pub fn check_liz_access(liz_path: &str, for_user: &User) -> Result<(), Error> {
             }
         }
     }
-    Err(ErrorForbidden(liz_debug!(
+    Err(ErrorForbidden(liz_dbg_errs!(
         "You do not have access to call this resource",
-        "check_liz_access",
         liz_path
     )))
 }

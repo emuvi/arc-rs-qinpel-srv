@@ -1,7 +1,7 @@
 use actix_web::error::{ErrorForbidden, ErrorInternalServerError};
 use actix_web::{HttpRequest, HttpResponse};
 use futures::executor;
-use liz::{self, liz_debug, liz_execs};
+use liz::{self, liz_dbg_errs, liz_fires};
 
 use std::io::{Read, Write};
 use std::path::Path;
@@ -60,7 +60,7 @@ pub fn run_cmd(
     working_dir: &str,
 ) -> SrvResult {
     let working_dir = Path::new(working_dir).to_owned();
-    let exec_name = format!("{}{}", cmd_name, liz_execs::exe_ext());
+    let exec_name = format!("{}{}", cmd_name, liz_fires::exe_ext());
     let full_exec = working_dir.join(&exec_name);
     let present_in_work_dir = full_exec.exists();
     let working_dir = if !present_in_work_dir {
@@ -104,7 +104,7 @@ pub fn run_cmd(
 
 pub fn run_liz(path_params: &PathParams) -> SrvResult {
     let results = liz::run(&path_params.path, &path_params.params)
-        .map_err(|err| ErrorInternalServerError(liz_debug!(err, "run", path_params)))?;
+        .map_err(|err| ErrorInternalServerError(liz_dbg_errs!(err, path_params)))?;
     let mut body = String::from("[");
     let mut first = true;
     for result in results {
