@@ -6,20 +6,20 @@ pub fn parse() -> ArgMatches {
     .about("QinpelSrv (Qinpel Server) is a library and a command program that servers public files, graphical user interfaces, file system access with authorization, command programs dispatchs, databases queries and Liz functionality with scripts. It is the base of the Pointel platform and the backend of the Qinpel, the Quick Interface for Power Intelligence.")
     .author("Éverton M. Vieira <everton.muvi@gmail.com>")
     .arg(
-      Arg::new("debug")
-        .short('g')
-        .long("debug")
-        .takes_value(false)
-        .required(false)
-        .help("Should we print debug messages?"),
-    )
-    .arg(
       Arg::new("verbose")
         .short('v')
         .long("verbose")
         .takes_value(false)
         .required(false)
         .help("Should we print verbose messages?"),
+    )
+    .arg(
+      Arg::new("archive")
+        .short('a')
+        .long("archive")
+        .takes_value(false)
+        .required(false)
+        .help("Should we archive all the messages?"),
     )
     .arg(
       Arg::new("name")

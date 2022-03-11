@@ -5,12 +5,12 @@ mod clip;
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let args = clip::parse();
-    let arg_debug = if args.is_present("debug") {
+    let arg_verbose = if args.is_present("verbose") {
         Some(true)
     } else {
         None
     };
-    let arg_verbose = if args.is_present("verbose") {
+    let arg_archive = if args.is_present("archive") {
         Some(true)
     } else {
         None
@@ -72,8 +72,8 @@ async fn main() -> std::io::Result<()> {
         None
     };
     let server = QinServer {
-        debug: arg_debug,
         verbose: arg_verbose,
+        archive: arg_archive,
         server_name: arg_name,
         server_host: arg_host,
         server_port: arg_port,

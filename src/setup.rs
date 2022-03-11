@@ -2,7 +2,6 @@ use serde_json::Value;
 
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::atomic::Ordering;
 
 use crate::QinServer;
 
@@ -12,8 +11,8 @@ static DEFAULT_PORT: u64 = 5490;
 
 #[derive(Debug)]
 pub struct Head {
-    pub debug: bool,
     pub verbose: bool,
+    pub archive: bool,
     pub server_name: String,
     pub server_host: String,
     pub server_port: u64,
@@ -28,8 +27,8 @@ pub struct Head {
 
 impl Head {
     pub fn load(qinpel_srv: QinServer) -> Self {
-        let mut setup_debug = false;
         let mut setup_verbose = false;
+        let mut setup_archive = false;
         let mut setup_name = String::from(DEFAULT_NAME);
         let mut setup_host = String::from(DEFAULT_HOST);
         let mut setup_port = DEFAULT_PORT;
@@ -45,15 +44,15 @@ impl Head {
             let file = std::fs::File::open(path).expect("Setup file exists but could not be open.");
             let setup_file: Value =
                 serde_json::from_reader(file).expect("Setup file exists but could not be parsed.");
-            match &setup_file["serverDebug"] {
-                Value::Bool(server_debug) => {
-                    setup_debug = *server_debug;
-                }
-                _ => {}
-            };
             match &setup_file["serverVerbose"] {
                 Value::Bool(server_verbose) => {
                     setup_verbose = *server_verbose;
+                }
+                _ => {}
+            };
+            match &setup_file["serverArchive"] {
+                Value::Bool(server_archive) => {
+                    setup_archive = *server_archive;
                 }
                 _ => {}
             };
@@ -135,17 +134,17 @@ impl Head {
                 _ => {}
             };
         }
-        if let Some(debug) = qinpel_srv.debug {
-            setup_debug = debug;
-        }
-        if setup_debug {
-            crate::DEBUG.store(true, Ordering::Relaxed);
-        }
         if let Some(verbose) = qinpel_srv.verbose {
             setup_verbose = verbose;
         }
         if setup_verbose {
-            crate::VERBOSE.store(true, Ordering::Relaxed);
+            liz::liz_debug::put_verbose();
+        }
+        if let Some(archive) = qinpel_srv.archive {
+            setup_archive = archive;
+        }
+        if setup_archive {
+            liz::liz_debug::put_archive();
         }
         if let Some(server_name) = qinpel_srv.server_name {
             setup_name = server_name;
@@ -184,8 +183,8 @@ impl Head {
             }
         }
         Head {
-            debug: setup_debug,
             verbose: setup_verbose,
+            archive: setup_archive,
             server_name: setup_name,
             server_host: setup_host,
             server_port: setup_port,

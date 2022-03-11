@@ -8,7 +8,7 @@ use crate::data::User;
 use crate::SrvData;
 
 pub fn get_user<'a>(req: &HttpRequest, srv_data: &'a SrvData) -> Option<&'a User> {
-    if is_debug_local(req, srv_data) {
+    if is_localhost(req) {
         let users = &srv_data.users;
         if let Some(root) = users.iter().find(|user| user.name == "root") {
             return Some(root);
@@ -27,13 +27,10 @@ pub fn get_user_or_err<'a>(req: &HttpRequest, srv_data: &'a SrvData) -> Result<&
     Ok(user.unwrap())
 }
 
-pub fn is_debug_local(req: &HttpRequest, srv_data: &SrvData) -> bool {
+pub fn is_localhost(req: &HttpRequest) -> bool {
     let info = req.connection_info();
     let host = info.host();
-    if !host.starts_with("localhost") {
-        return false;
-    }
-    (*srv_data).head.debug
+    host.starts_with("localhost")
 }
 
 pub fn get_token_user<'a>(req: &HttpRequest, srv_data: &'a SrvData) -> Option<&'a User> {

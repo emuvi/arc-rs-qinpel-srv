@@ -12,7 +12,6 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 
 mod data;
@@ -33,12 +32,9 @@ type SrvData = web::Data<Arc<data::Body>>;
 type SrvError = actix_web::error::Error;
 type SrvResult = Result<HttpResponse, SrvError>;
 
-pub static DEBUG: AtomicBool = AtomicBool::new(false);
-pub static VERBOSE: AtomicBool = AtomicBool::new(false);
-
 pub struct QinServer {
-    pub debug: Option<bool>,
     pub verbose: Option<bool>,
+    pub archive: Option<bool>,
     pub server_name: Option<String>,
     pub server_host: Option<String>,
     pub server_port: Option<u64>,
@@ -68,7 +64,7 @@ pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
     let server = HttpServer::new(move || {
         let server_app = App::new()
             .wrap_fn(|req, srv| {
-                let should_log = DEBUG.load(Ordering::Relaxed);
+                let should_log = liz::liz_debug::is_verbose();
                 let log_req: Option<String> = if should_log {
                     Some(format!("Request: \n{:?}", req))
                 } else {
@@ -81,7 +77,7 @@ pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
                     res
                 })
             })
-            .wrap(if VERBOSE.load(Ordering::Relaxed) {
+            .wrap(if liz::liz_debug::is_verbose() {
                 middleware::DefaultHeaders::new()
                     .header("version", env!("CARGO_PKG_VERSION"))
             } else {

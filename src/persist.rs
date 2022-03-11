@@ -1,10 +1,8 @@
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError};
 use actix_web::HttpResponse;
-use liz::{
-    liz_codes, liz_dbg_errs,
-    liz_parse::{self, BlockBy},
-    liz_texts,
-};
+use liz::liz_parse::{self, BlockTrait};
+use liz::{liz_codes, liz_forms, liz_texts};
+use liz::{liz_dbg_bleb, liz_dbg_errs};
 use once_cell::sync::Lazy;
 
 use crate::data::Base;
@@ -18,9 +16,7 @@ pub async fn run_sql(bas_name: &str, path_params: &PathParams, srv_data: &SrvDat
     let source = get_source(path_params)?;
     let result = srv_data.pooling.run(base, &source).await;
     if let Err(err) = result {
-        return Err(ErrorInternalServerError(liz_dbg_errs!(
-            err, bas_name, source
-        )));
+        return Err(ErrorInternalServerError(liz_dbg_errs!(err, bas_name)));
     }
     let result = result.unwrap();
     Ok(HttpResponse::Ok().body(format!("Affected: {}", result)))
@@ -51,24 +47,32 @@ fn get_base<'a>(base_name: &str, srv_data: &'a SrvData) -> Result<&'a Base, SrvE
     )))
 }
 
-static SQL_BLOCKS: Lazy<Vec<BlockBy>> = Lazy::new(|| {
-    vec![
+static SQL_BLOCKS: Lazy<Vec<Box<dyn BlockTrait>>> = Lazy::new(|| {
+    liz::liz_parse::get_parsers(vec![
         liz_parse::block_double_quotes(),
         liz_parse::block_single_quotes(),
         liz_parse::block_white_space(),
         liz_parse::block_char_number('$'),
         liz_parse::block_punctuation(),
-    ]
+    ])
+    .map_err(|err| liz_dbg_bleb!(err))
+    .expect("Could not get the SQL parser.")
 });
 
 fn get_source(path_params: &PathParams) -> Result<String, SrvError> {
     let path = &path_params.path;
     let source = liz_texts::read(path).map_err(|err| ErrorBadRequest(liz_dbg_errs!(err, path)))?;
-    let mut code = liz_codes::code(&source);
+    let mut code = liz_codes::code(source);
+    if let Err(err) = liz_parse::rig_parse_all(&mut code.desk, &SQL_BLOCKS) {
+        return Err(ErrorInternalServerError(liz_dbg_errs!(
+            err,
+            path_params.path
+        )));
+    }
     if let Some(params) = &path_params.params {
         for (index, param) in params.iter().enumerate() {
             let of = format!("${}", index + 1);
-            code.change_all(&of, param);
+            liz_forms::kit_change_all(&mut code.desk, &of, param);
         }
     }
     Ok(String::default())
