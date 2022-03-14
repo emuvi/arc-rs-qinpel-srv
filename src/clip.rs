@@ -15,7 +15,7 @@ pub fn parse() -> ArgMatches {
     )
     .arg(
       Arg::new("archive")
-        .short('a')
+        .short('k')
         .long("archive")
         .takes_value(false)
         .required(false)

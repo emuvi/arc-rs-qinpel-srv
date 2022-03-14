@@ -1,16 +1,18 @@
 #!/bin/liz
-print("Searching...")
-devs_path = liz.path_parent_find(liz.pwd(), "Devs")
-if devs_path == "" then
-   print("Could not found the Devs path.")
-   return
+
+print("Testing specifics...")
+local wd = Liz.wd()
+local project = Liz.path_name(wd)
+local dev_path = Liz.path_parent_find(wd, "Devs")
+if dev_path == "" then
+    print("Could not found the Devs path.")
+    return
 end
-tst_path = liz.path_join(devs_path, "Test")
-srv_dest = liz.path_join(tst_path, "qinpel-srv")
-stp_dest = liz.path_join(tst_path, "setup.json")
-print("Buildind...")
-liz.cmd("cargo", {"build"})
-print("Copying...")
-liz.cp("target/debug/qinpel-srv", srv_dest)
-liz.cp("setup.json", stp_dest)
-print("Finished!")
+local tst_path = Liz.path_join(dev_path, "Test")
+local cmd_dest = Liz.path_join(tst_path, "cmd")
+local pro_dest = Liz.path_join(cmd_dest, project)
+local origin = Liz.path_join(pro_dest, project .. Liz.exe_ext())
+local destiny = Liz.path_join(tst_path, project .. Liz.exe_ext())
+Liz.mv(origin, destiny)
+Liz.rm(pro_dest)
+print("Done testing specifics...")

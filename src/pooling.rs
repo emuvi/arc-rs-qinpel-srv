@@ -9,6 +9,7 @@ use std::sync::RwLock;
 
 use super::data::Base;
 
+#[derive(Debug)]
 pub struct Pool {
     map: RwLock<HashMap<String, AnyPool>>,
 }

@@ -9,6 +9,7 @@ use crate::SrvResult;
 
 use std::time::SystemTime;
 
+#[derive(Debug)]
 pub struct Auth {
     pub user: String,
     pub from: SystemTime,

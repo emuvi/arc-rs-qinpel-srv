@@ -13,15 +13,16 @@ use crate::login::Auth;
 use crate::pooling::Pool;
 use crate::setup::Head;
 
+#[derive(Debug)]
 pub struct Body {
     pub head: Head,
     pub users: Users,
     pub bases: Bases,
     pub pooling: Pool,
-    pub working_dir: String,
+    pub srv_dir: String,
+    pub server: RwLock<Option<Server>>,
     pub tokens: RwLock<HashMap<String, Auth>>,
     pub last_clean: SystemTime,
-    pub server: RwLock<Option<Server>>,
 }
 
 pub type Users = Vec<User>;
@@ -86,8 +87,8 @@ impl Base {
 
 impl Body {
     pub fn new(head: Head) -> Self {
-        let working_dir = Body::init_working_dir();
-        let users = Body::init_users(&working_dir);
+        let srv_dir = Body::init_working_dir();
+        let users = Body::init_users(&srv_dir);
         let bases = Body::init_bases(&users);
         let pooling = Pool::new();
         Body {
@@ -95,10 +96,10 @@ impl Body {
             users,
             bases,
             pooling,
-            working_dir,
+            srv_dir,
+            server: RwLock::new(None),
             tokens: RwLock::new(HashMap::new()),
             last_clean: SystemTime::now(),
-            server: RwLock::new(None),
         }
     }
 

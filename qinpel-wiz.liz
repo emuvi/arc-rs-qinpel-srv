@@ -1,6 +1,6 @@
 print("Building binary...")
-liz.cmd("cargo", {"build", "--release"}, ".", true, true)
-local binary_name = "qinpel-srv" .. liz.exe_ext
+Liz.cmd("cargo", {"build", "--release"}, ".", true, true)
+local binary_name = "qinpel-srv" .. Liz.exe_ext
 local binary_origin = "target/release/" .. binary_name
 local binary_destiny = "../../" .. binary_name
-liz.cp_tmp(binary_origin, binary_destiny)
+Liz.cp_tmp(binary_origin, binary_destiny)

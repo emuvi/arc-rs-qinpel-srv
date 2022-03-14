@@ -2,6 +2,7 @@ use actix_web::{HttpRequest, HttpResponse};
 
 use std::path::Path;
 
+use crate::bad_srv;
 use crate::data::Access;
 use crate::guard;
 use crate::SrvData;
@@ -10,10 +11,11 @@ use crate::SrvResult;
 
 pub fn list_apps(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 	let user = guard::get_user_or_err(req, srv_data)?;
-	let dirs = list_folder_dirs(Path::new("./app"))?;
+	let apps_dir = liz::liz_paths::path_join(&srv_data.srv_dir, "app").map_err(|err| bad_srv(err))?;
+	let apps_dirs = list_folder_dirs(Path::new(&apps_dir))?;
 	let mut body = String::new();
 	if user.master {
-		dirs.into_iter().for_each(|dir| {
+		apps_dirs.into_iter().for_each(|dir| {
 			body.push_str(&dir);
 			body.push_str("\n");
 		});
@@ -21,7 +23,7 @@ pub fn list_apps(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 		for user_access in &user.access {
 			match user_access {
 				Access::APP { name } => {
-					if dirs.contains(name) {
+					if apps_dirs.contains(name) {
 						body.push_str(name);
 						body.push_str("\n");
 					}
@@ -35,10 +37,11 @@ pub fn list_apps(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 
 pub fn list_cmds(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 	let user = guard::get_user_or_err(req, srv_data)?;
-	let dirs = list_folder_dirs(Path::new("./cmd"))?;
+	let cmds_dir = liz::liz_paths::path_join(&srv_data.srv_dir, "app").map_err(|err| bad_srv(err))?;
+	let cmds_dirs = list_folder_dirs(Path::new(&cmds_dir))?;
 	let mut body = String::new();
 	if user.master {
-		dirs.into_iter().for_each(|dir| {
+		cmds_dirs.into_iter().for_each(|dir| {
 			body.push_str(&dir);
 			body.push_str("\n");
 		});
@@ -46,7 +49,7 @@ pub fn list_cmds(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 		for user_access in &user.access {
 			match user_access {
 				Access::CMD { name, fixed_args: _ } => {
-					if dirs.contains(name) {
+					if cmds_dirs.contains(name) {
 						body.push_str(name);
 						body.push_str("\n");
 					}

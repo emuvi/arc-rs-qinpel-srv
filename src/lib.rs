@@ -2,6 +2,7 @@ pub use actix_web;
 pub use liz;
 
 use actix_web::dev::Service;
+use actix_web::error::{ErrorBadRequest, ErrorInternalServerError};
 use actix_web::{middleware, web, App, HttpResponse, HttpServer};
 use futures::future::FutureExt;
 use liz::liz_dbg_errs;
@@ -78,8 +79,7 @@ pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
                 })
             })
             .wrap(if liz::liz_debug::is_verbose() {
-                middleware::DefaultHeaders::new()
-                    .header("version", env!("CARGO_PKG_VERSION"))
+                middleware::DefaultHeaders::new().header("version", env!("CARGO_PKG_VERSION"))
             } else {
                 middleware::DefaultHeaders::new()
             })
@@ -97,17 +97,20 @@ pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
             .service(server::version)
             .service(login::enter);
         let server_app = if data.head.serves_pubs {
-                server_app.service(runner::get_pub)
-            } else {
-                server_app
-            };
+            server_app.service(runner::get_pub)
+        } else {
+            server_app
+        };
         let server_app = if data.head.serves_apps {
-            server_app.service(runner::get_app).service(runner::list_apps)
+            server_app
+                .service(runner::get_app)
+                .service(runner::list_apps)
         } else {
             server_app
         };
         let server_app = if data.head.serves_dirs {
-            server_app.service(servfs::dir_list)
+            server_app
+                .service(servfs::dir_list)
                 .service(servfs::dir_new)
                 .service(servfs::dir_copy)
                 .service(servfs::dir_move)
@@ -122,14 +125,23 @@ pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
             server_app
         };
         let server_app = if data.head.serves_cmds {
-            server_app.service(runner::run_cmd).service(runner::list_cmds)
+            server_app
+                .service(runner::run_cmd)
+                .service(runner::list_cmds)
         } else {
             server_app
         };
         let server_app = if data.head.serves_sqls {
-            server_app.service(runner::run_sql)
+            server_app
+                .service(runner::run_sql)
                 .service(runner::ask_sql)
                 .service(runner::list_bases)
+        } else {
+            server_app
+        };
+        let server_app = if data.head.serves_lizs {
+            server_app
+                .service(runner::run_liz)
         } else {
             server_app
         };
@@ -167,3 +179,12 @@ fn secure_server() -> Option<ServerConfig> {
     }
     None
 }
+
+pub fn bad_req(err: impl std::fmt::Display) -> actix_web::error::Error {
+    ErrorBadRequest(format!("{}", err))
+}
+
+pub fn bad_srv(err: impl std::fmt::Display) -> actix_web::error::Error {
+    ErrorInternalServerError(format!("{}", err))
+}
+
