@@ -3,7 +3,7 @@ pub use liz;
 
 use actix_web::dev::Service;
 use actix_web::error::{ErrorBadRequest, ErrorInternalServerError};
-use actix_web::{middleware, web, App, HttpResponse, HttpServer};
+use actix_web::{web, App, HttpResponse, HttpServer};
 use futures::future::FutureExt;
 use liz::liz_dbg_errs;
 use rustls::internal::pemfile::{certs, pkcs8_private_keys};
@@ -63,26 +63,17 @@ pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
     let data = Arc::new(body);
     let data_main = data.clone();
     let server = HttpServer::new(move || {
-        let server_app = App::new()
-            .wrap_fn(|req, srv| {
-                let should_log = liz::liz_debug::is_verbose();
-                let log_req: Option<String> = if should_log {
-                    Some(format!("Request: \n{:?}", req))
-                } else {
-                    None
-                };
-                srv.call(req).map(|res| {
-                    if let Some(log_req) = log_req {
-                        println!("{}\nResponse: \n{:?}", log_req, res);
-                    }
-                    res
-                })
+        let server_app = App::new();
+        #[cfg(debug_assertions)]
+        let server_app = server_app.wrap_fn(|req, srv| {
+            let start = format!("\nRequest: \n{:?}", req);
+            srv.call(req).map(move |res| {
+                let finish = format!("{}\nResponse: \n{:?}", start, res);
+                liz::liz_debug::debug(finish);
+                res
             })
-            .wrap(if liz::liz_debug::is_verbose() {
-                middleware::DefaultHeaders::new().header("version", env!("CARGO_PKG_VERSION"))
-            } else {
-                middleware::DefaultHeaders::new()
-            })
+        });
+        let server_app = server_app
             .data(data.clone())
             .app_data(web::JsonConfig::default().error_handler(|err, _req| {
                 actix_web::error::InternalError::from_response(
@@ -140,8 +131,7 @@ pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
             server_app
         };
         let server_app = if data.head.serves_lizs {
-            server_app
-                .service(runner::run_liz)
+            server_app.service(runner::run_liz)
         } else {
             server_app
         };
@@ -187,4 +177,3 @@ pub fn bad_req(err: impl std::fmt::Display) -> actix_web::error::Error {
 pub fn bad_srv(err: impl std::fmt::Display) -> actix_web::error::Error {
     ErrorInternalServerError(format!("{}", err))
 }
-

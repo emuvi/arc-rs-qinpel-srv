@@ -1,6 +1,5 @@
 #!/bin/liz
 
-print("Testing specifics...")
 local wd = Liz.wd()
 local project = Liz.path_name(wd)
 local dev_path = Liz.path_parent_find(wd, "Devs")
@@ -11,8 +10,7 @@ end
 local tst_path = Liz.path_join(dev_path, "Test")
 local cmd_dest = Liz.path_join(tst_path, "cmd")
 local pro_dest = Liz.path_join(cmd_dest, project)
-local origin = Liz.path_join(pro_dest, project .. Liz.exe_ext())
-local destiny = Liz.path_join(tst_path, project .. Liz.exe_ext())
+local origin = Liz.path_join(pro_dest, project .. Liz.dot_exe_ext())
+local destiny = Liz.path_join(tst_path, project .. Liz.dot_exe_ext())
 Liz.mv(origin, destiny)
 Liz.rm(pro_dest)
-print("Done testing specifics...")

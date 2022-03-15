@@ -1,5 +1,10 @@
 #!/bin/liz
 
 print("Building...")
-Liz.cmd("cargo" .. Liz.exe_ext(), {"build"})
+Liz.cmd("cargo", {"build"})
+if Liz.has("build.liz") then 
+    print("Building specifics...")
+    Liz.run_wd("build.liz") 
+    print("Done build specifics...")
+end
 print("Done build command")
