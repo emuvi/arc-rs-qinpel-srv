@@ -1,5 +1,5 @@
 use actix_web::error::{Error, ErrorForbidden};
-use actix_web::HttpRequest;
+use actix_web::{HttpRequest, HttpMessage};
 use liz::liz_dbg_errs;
 
 use crate::data::Access;
@@ -39,7 +39,7 @@ pub fn get_token_user<'a>(req: &HttpRequest, srv_data: &'a SrvData) -> Option<&'
         return None;
     }
     let our_tokens = &srv_data.tokens.read().unwrap();
-    let found_auth = our_tokens.get(got_token);
+    let found_auth = our_tokens.get(&got_token);
     if found_auth.is_none() {
         return None;
     }
@@ -53,13 +53,16 @@ pub fn get_token_user<'a>(req: &HttpRequest, srv_data: &'a SrvData) -> Option<&'
     None
 }
 
-pub fn get_qinpel_token(req: &HttpRequest) -> &str {
+pub fn get_qinpel_token(req: &HttpRequest) -> String {
     if let Some(token) = req.headers().get("Qinpel-Token") {
         if let Ok(token) = token.to_str() {
-            return token;
+            return token.into();
         }
     }
-    ""
+    if let Some(token) = req.cookie("Qinpel-Token") {
+        return token.value().into();
+    }
+    String::default()
 }
 
 pub fn check_app_access(app_name: &str, for_user: &User) -> Result<(), Error> {

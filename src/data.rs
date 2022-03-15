@@ -32,6 +32,7 @@ pub struct User {
     pub name: String,
     pub pass: String,
     pub home: String,
+    pub lang: String,
     pub master: bool,
     pub access: Vec<Access>,
 }
@@ -123,6 +124,7 @@ impl Body {
                 name: String::from("root"),
                 pass: String::new(),
                 home: String::from("./dir/root"),
+                lang: String::new(),
                 master: true,
                 access: Vec::new(),
             };

@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::SrvData;
 use crate::SrvResult;
+use crate::data::User;
 
 use std::time::SystemTime;
 
@@ -24,26 +25,26 @@ pub struct TryAuth {
 
 #[derive(Serialize, Deserialize)]
 struct Logged {
+    pub lang: String,
     pub token: String,
 }
 
 #[post("/enter")]
 pub async fn enter(auth: Json<TryAuth>, srv_data: SrvData) -> SrvResult {
-    let mut user_found = false;
+    let mut user_found: Option<&User> = None;
     {
         let users = &srv_data.users;
         for user in users {
             if auth.name == user.name && auth.pass == user.pass {
-                user_found = true;
+                user_found = Some(user);
                 break;
             }
         }
     }
-    if !user_found {
-        return Err(ErrorForbidden("User and pass not found"));
-    } else {
+    if let Some(user) = user_found {
         let token = generate_token();
         let result = Logged{
+            lang: user.lang.clone(),
             token: token.clone(),
         };
         let auth = Auth {
@@ -55,6 +56,8 @@ pub async fn enter(auth: Json<TryAuth>, srv_data: SrvData) -> SrvResult {
         }
         try_clean_tokens(srv_data);
         return Ok(HttpResponse::Ok().json(result));
+    } else {
+        return Err(ErrorForbidden("User and pass not found"));
     }
 }
 

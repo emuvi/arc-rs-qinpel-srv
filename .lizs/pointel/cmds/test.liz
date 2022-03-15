@@ -3,6 +3,15 @@
 local wd = Liz.wd()
 local project = Liz.path_name(wd)
 print("Testing " .. project .. " ...")
+
+if Liz.has("pre-test.liz") then
+    print("Running pre test...")
+    Liz.run_wd("pre-test.liz")
+    print("Done pre test")
+end
+
+Liz.run("build")
+
 local dev_path = Liz.path_parent_find(wd, "Devs")
 if dev_path == "" then
     print("Could not found the Devs path.")
@@ -11,14 +20,16 @@ end
 local tst_path = Liz.path_join(dev_path, "Test")
 local cmd_dest = Liz.path_join(tst_path, "cmd")
 local pro_dest = Liz.path_join(cmd_dest, project)
-Liz.mkdir(pro_dest)
-Liz.run("build")
 local origin = "target/debug/" .. project .. Liz.dot_exe_ext()
 local destiny = Liz.path_join(pro_dest, project .. Liz.dot_exe_ext())
+Liz.rm(pro_dest)
+Liz.mkdir(pro_dest)
 Liz.cp(origin, destiny)
-if Liz.has("test.liz") then 
-    print("Testing specifics...")
-    Liz.run_wd("test.liz") 
-    print("Done test specifics...")
+
+if Liz.has("pos-test.liz") then
+    print("Running post test...")
+    Liz.run_wd("pos-test.liz")
+    print("Done post test")
 end
+
 print("Done test command")

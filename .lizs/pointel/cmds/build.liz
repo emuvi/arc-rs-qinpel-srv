@@ -1,10 +1,19 @@
 #!/bin/liz
 
 print("Building...")
-Liz.cmd("cargo", {"build"})
-if Liz.has("build.liz") then 
-    print("Building specifics...")
-    Liz.run_wd("build.liz") 
-    print("Done build specifics...")
+
+if Liz.has("pre-build.liz") then
+    print("Running pre build...")
+    Liz.run_wd("pre-build.liz")
+    print("Done pre build")
 end
+
+Liz.cmd("cargo", {"build"})
+
+if Liz.has("pos-build.liz") then 
+    print("Running post build...")
+    Liz.run_wd("pos-build.liz")
+    print("Done post build")
+end
+
 print("Done build command")
