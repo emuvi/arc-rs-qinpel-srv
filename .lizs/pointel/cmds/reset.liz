@@ -1,0 +1,6 @@
+#!/bin/liz
+
+print("Resetting...")
+Liz.run("clean")
+Liz.run("test")
+print("Done reset command")
