@@ -81,6 +81,71 @@ pub async fn list_cmds(req: HttpRequest, srv_data: SrvData) -> SrvResult {
     liz_dbg_reav!(lists::list_cmds(&req, &srv_data));
 }
 
+#[post("/dbs/new/*")]
+pub async fn dbs_new(req: HttpRequest, srv_data: SrvData) -> SrvResult {
+    liz_dbg_call!(req, srv_data);
+    let user = guard::get_user_or_err(&req, &srv_data)?;
+    liz_dbg_step!(user);
+    let path = req.match_info().path();
+    liz_dbg_step!(path);
+    let base_name = path
+        .split("/")
+        .nth(3)
+        .ok_or("Could not found the data base name")
+        .map_err(|err| bad_req(err))?;
+    liz_dbg_step!(base_name);
+    Ok("".into())
+}
+
+#[post("/dbs/ask/*")]
+pub async fn dbs_ask(req: HttpRequest, srv_data: SrvData) -> SrvResult {
+    liz_dbg_call!(req, srv_data);
+    let user = guard::get_user_or_err(&req, &srv_data)?;
+    liz_dbg_step!(user);
+    let path = req.match_info().path();
+    liz_dbg_step!(path);
+    let base_name = path
+        .split("/")
+        .nth(3)
+        .ok_or("Could not found the data base name")
+        .map_err(|err| bad_req(err))?;
+    liz_dbg_step!(base_name);
+    Ok("".into())
+}
+
+#[post("/dbs/set/*")]
+pub async fn dbs_set(req: HttpRequest, srv_data: SrvData) -> SrvResult {
+    liz_dbg_call!(req, srv_data);
+    let user = guard::get_user_or_err(&req, &srv_data)?;
+    liz_dbg_step!(user);
+    let path = req.match_info().path();
+    liz_dbg_step!(path);
+    let base_name = path
+        .split("/")
+        .nth(3)
+        .ok_or("Could not found the data base name")
+        .map_err(|err| bad_req(err))?;
+    liz_dbg_step!(base_name);
+    Ok("".into())
+}
+
+#[post("/dbs/del/*")]
+pub async fn dbs_del(req: HttpRequest, srv_data: SrvData) -> SrvResult {
+    liz_dbg_call!(req, srv_data);
+    let user = guard::get_user_or_err(&req, &srv_data)?;
+    liz_dbg_step!(user);
+    let path = req.match_info().path();
+    liz_dbg_step!(path);
+    let base_name = path
+        .split("/")
+        .nth(3)
+        .ok_or("Could not found the data base name")
+        .map_err(|err| bad_req(err))?;
+    liz_dbg_step!(base_name);
+    Ok("".into())
+}
+
+
 #[post("/run/sql/*")]
 pub async fn run_sql(
     req: HttpRequest,

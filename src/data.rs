@@ -70,7 +70,7 @@ pub struct Base {
 }
 
 impl Base {
-    pub fn get_default_bas_name(for_user: &User) -> String {
+    pub fn get_default_base_name(for_user: &User) -> String {
         format!("{}_default_dbs", for_user.name)
     }
 
@@ -155,7 +155,7 @@ impl Body {
             Bases::new()
         };
         for user in users {
-            let default_bas_name = Base::get_default_bas_name(user);
+            let default_bas_name = Base::get_default_base_name(user);
             let has_default_dbs = &bases.iter().any(|base| &base.name == &default_bas_name);
             if !has_default_dbs {
                 let default_dbs = Base {
