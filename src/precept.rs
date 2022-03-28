@@ -76,10 +76,12 @@ pub fn run_cmd(
     let mut cmd = Command::new(full_exec);
     cmd.current_dir(working_dir);
     for an_access in &user.access {
-        if let Access::CMD { name, fixed_args } = an_access {
+        if let Access::CMD { name, args } = an_access {
             if name == cmd_name {
-                for arg in fixed_args {
-                    cmd.arg(arg);
+                if let Some(args) = args {
+                    for arg in args {
+                        cmd.arg(arg);
+                    }
                 }
             }
         }
@@ -102,7 +104,7 @@ pub fn run_cmd(
     Ok(HttpResponse::Ok().body(result))
 }
 
-pub fn run_liz(path_params: &PathParams) -> SrvResult {
+pub fn liz_run(path_params: &PathParams) -> SrvResult {
     let results = liz::run(&path_params.path, &path_params.params)
         .map_err(|err| ErrorInternalServerError(liz_dbg_errs!(err, path_params)))?;
     let mut body = String::from("[");

@@ -20,6 +20,7 @@ pub struct Head {
     pub serves_apps: bool,
     pub serves_dirs: bool,
     pub serves_cmds: bool,
+    pub serves_regs: bool,
     pub serves_sqls: bool,
     pub serves_lizs: bool,
     pub redirects: Option<HashMap<String, String>>,
@@ -36,6 +37,7 @@ impl Head {
         let mut setup_apps = false;
         let mut setup_dirs = false;
         let mut setup_cmds = false;
+        let mut setup_regs = false;
         let mut setup_sqls = false;
         let mut setup_lizs = false;
         let mut setup_redirects: Option<HashMap<String, String>> = None;
@@ -97,6 +99,12 @@ impl Head {
             match &setup_file["servesCMDs"] {
                 Value::Bool(serves_cmds) => {
                     setup_cmds = *serves_cmds;
+                }
+                _ => {}
+            };
+            match &setup_file["servesREGs"] {
+                Value::Bool(serves_regs) => {
+                    setup_regs = *serves_regs;
                 }
                 _ => {}
             };
@@ -167,6 +175,9 @@ impl Head {
         if let Some(serves_cmds) = qinpel_srv.serves_cmds {
             setup_cmds = serves_cmds;
         }
+        if let Some(serves_regs) = qinpel_srv.serves_regs {
+            setup_sqls = serves_regs;
+        }
         if let Some(serves_sqls) = qinpel_srv.serves_sqls {
             setup_sqls = serves_sqls;
         }
@@ -192,6 +203,7 @@ impl Head {
             serves_apps: setup_apps,
             serves_dirs: setup_dirs,
             serves_cmds: setup_cmds,
+            serves_regs: setup_regs,
             serves_sqls: setup_sqls,
             serves_lizs: setup_lizs,
             redirects: setup_redirects,

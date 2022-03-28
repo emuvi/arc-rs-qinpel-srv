@@ -48,7 +48,7 @@ pub fn list_cmds(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 	} else {
 		for user_access in &user.access {
 			match user_access {
-				Access::CMD { name, fixed_args: _ } => {
+				Access::CMD { name, args: _ } => {
 					if cmds_dirs.contains(name) {
 						body.push_str(name);
 						body.push_str("\n");
@@ -87,7 +87,7 @@ pub fn list_bases(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 	let mut body = String::new();
 	for user_access in &user.access {
 		match user_access {
-			Access::BAS { name } => {
+			Access::DBS { name } => {
 				body.push_str(name);
 				body.push_str("\n");
 			}

@@ -81,8 +81,8 @@ pub async fn list_cmds(req: HttpRequest, srv_data: SrvData) -> SrvResult {
     liz_dbg_reav!(lists::list_cmds(&req, &srv_data));
 }
 
-#[post("/dbs/new/*")]
-pub async fn dbs_new(req: HttpRequest, srv_data: SrvData) -> SrvResult {
+#[post("/reg/new/*")]
+pub async fn reg_new(req: HttpRequest, srv_data: SrvData) -> SrvResult {
     liz_dbg_call!(req, srv_data);
     let user = guard::get_user_or_err(&req, &srv_data)?;
     liz_dbg_step!(user);
@@ -97,8 +97,8 @@ pub async fn dbs_new(req: HttpRequest, srv_data: SrvData) -> SrvResult {
     Ok("".into())
 }
 
-#[post("/dbs/ask/*")]
-pub async fn dbs_ask(req: HttpRequest, srv_data: SrvData) -> SrvResult {
+#[post("/reg/ask/*")]
+pub async fn reg_ask(req: HttpRequest, srv_data: SrvData) -> SrvResult {
     liz_dbg_call!(req, srv_data);
     let user = guard::get_user_or_err(&req, &srv_data)?;
     liz_dbg_step!(user);
@@ -113,8 +113,8 @@ pub async fn dbs_ask(req: HttpRequest, srv_data: SrvData) -> SrvResult {
     Ok("".into())
 }
 
-#[post("/dbs/set/*")]
-pub async fn dbs_set(req: HttpRequest, srv_data: SrvData) -> SrvResult {
+#[post("/reg/set/*")]
+pub async fn reg_set(req: HttpRequest, srv_data: SrvData) -> SrvResult {
     liz_dbg_call!(req, srv_data);
     let user = guard::get_user_or_err(&req, &srv_data)?;
     liz_dbg_step!(user);
@@ -129,8 +129,8 @@ pub async fn dbs_set(req: HttpRequest, srv_data: SrvData) -> SrvResult {
     Ok("".into())
 }
 
-#[post("/dbs/del/*")]
-pub async fn dbs_del(req: HttpRequest, srv_data: SrvData) -> SrvResult {
+#[post("/reg/del/*")]
+pub async fn reg_del(req: HttpRequest, srv_data: SrvData) -> SrvResult {
     liz_dbg_call!(req, srv_data);
     let user = guard::get_user_or_err(&req, &srv_data)?;
     liz_dbg_step!(user);
@@ -145,9 +145,8 @@ pub async fn dbs_del(req: HttpRequest, srv_data: SrvData) -> SrvResult {
     Ok("".into())
 }
 
-
-#[post("/run/sql/*")]
-pub async fn run_sql(
+#[post("/sql/run/*")]
+pub async fn sql_run(
     req: HttpRequest,
     path_params: Json<PathParams>,
     srv_data: SrvData,
@@ -170,11 +169,11 @@ pub async fn run_sql(
         String::from(base_name)
     };
     liz_dbg_step!(base_name);
-    liz_dbg_reav!(persist::run_sql(&base_name, &path_params, &srv_data).await);
+    liz_dbg_reav!(persist::sql_run(&base_name, &path_params, &srv_data).await);
 }
 
-#[post("/ask/sql/*")]
-pub async fn ask_sql(
+#[post("/sql/ask/*")]
+pub async fn sql_ask(
     req: HttpRequest,
     path_params: Json<PathParams>,
     srv_data: SrvData,
@@ -197,7 +196,7 @@ pub async fn ask_sql(
         String::from(base_name)
     };
     liz_dbg_step!(base_name);
-    liz_dbg_reav!(persist::ask_sql(&base_name, &path_params, &srv_data).await);
+    liz_dbg_reav!(persist::sql_ask(&base_name, &path_params, &srv_data).await);
 }
 
 #[get("/list/bases")]
@@ -206,8 +205,8 @@ pub async fn list_bases(req: HttpRequest, srv_data: SrvData) -> SrvResult {
     liz_dbg_reav!(lists::list_bases(&req, &srv_data));
 }
 
-#[post("/run/liz")]
-pub async fn run_liz(
+#[post("/liz/run")]
+pub async fn liz_run(
     req: HttpRequest,
     path_params: Json<PathParams>,
     srv_data: SrvData,
@@ -216,7 +215,7 @@ pub async fn run_liz(
     let user = guard::get_user_or_err(&req, &srv_data)?;
     liz_dbg_step!(user);
     guard::check_liz_access(&path_params.path, &user)?;
-    liz_dbg_reav!(precept::run_liz(&path_params));
+    liz_dbg_reav!(precept::liz_run(&path_params));
 }
 
 #[derive(Debug, Deserialize)]

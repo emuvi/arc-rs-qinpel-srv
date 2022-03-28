@@ -48,9 +48,12 @@ pub enum Access {
     },
     CMD {
         name: String,
-        fixed_args: Vec<String>,
+        args: Option<Vec<String>>,
     },
-    BAS {
+    DBS {
+        name: String,
+    },
+    REG {
         name: String,
     },
     SQL {
@@ -61,15 +64,15 @@ pub enum Access {
     },
 }
 
-pub type Bases = Vec<Base>;
+pub type Bases = Vec<DBS>;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Base {
+pub struct DBS {
     pub name: String,
     pub info: String,
 }
 
-impl Base {
+impl DBS {
     pub fn get_default_base_name(for_user: &User) -> String {
         format!("{}_default_dbs", for_user.name)
     }
@@ -155,12 +158,12 @@ impl Body {
             Bases::new()
         };
         for user in users {
-            let default_bas_name = Base::get_default_base_name(user);
+            let default_bas_name = DBS::get_default_base_name(user);
             let has_default_dbs = &bases.iter().any(|base| &base.name == &default_bas_name);
             if !has_default_dbs {
-                let default_dbs = Base {
+                let default_dbs = DBS {
                     name: default_bas_name,
-                    info: Base::get_default_dbs_info(user),
+                    info: DBS::get_default_dbs_info(user),
                 };
                 bases.push(default_dbs);
             }

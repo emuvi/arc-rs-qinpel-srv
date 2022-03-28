@@ -3,7 +3,7 @@ use actix_web::{HttpRequest, HttpMessage};
 use liz::liz_dbg_errs;
 
 use crate::data::Access;
-use crate::data::Base;
+use crate::data::DBS;
 use crate::data::User;
 use crate::SrvData;
 
@@ -180,7 +180,7 @@ pub fn check_cmd_access(cmd_name: &str, for_user: &User) -> Result<(), Error> {
         for user_access in &for_user.access {
             if let Access::CMD {
                 name,
-                fixed_args: _,
+                args: _,
             } = user_access
             {
                 if cmd_name == name {
@@ -196,12 +196,12 @@ pub fn check_cmd_access(cmd_name: &str, for_user: &User) -> Result<(), Error> {
 }
 
 pub fn check_sql_access(base_name: &str, sql_path: &str, for_user: &User) -> Result<(), Error> {
-    if for_user.master || base_name == Base::get_default_base_name(for_user) {
+    if for_user.master || base_name == DBS::get_default_base_name(for_user) {
         return Ok(());
     }
     let mut has_dbs_access = false;
     for user_access in &for_user.access {
-        if let Access::BAS { name } = user_access {
+        if let Access::DBS { name } = user_access {
             if base_name == name {
                 has_dbs_access = true;
                 break;

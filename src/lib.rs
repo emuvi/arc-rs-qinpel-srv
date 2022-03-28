@@ -43,6 +43,7 @@ pub struct QinServer {
     pub serves_apps: Option<bool>,
     pub serves_dirs: Option<bool>,
     pub serves_cmds: Option<bool>,
+    pub serves_regs: Option<bool>,
     pub serves_sqls: Option<bool>,
     pub serves_lizs: Option<bool>,
     pub redirects: Option<HashMap<String, String>>,
@@ -122,16 +123,30 @@ pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
         } else {
             server_app
         };
-        let server_app = if data.head.serves_sqls {
+        let server_app = if true  {
             server_app
-                .service(runner::run_sql)
-                .service(runner::ask_sql)
                 .service(runner::list_bases)
         } else {
             server_app
         };
+        let server_app = if data.head.serves_regs {
+            server_app
+                .service(runner::reg_new)
+                .service(runner::reg_ask)
+                .service(runner::reg_set)
+                .service(runner::reg_del)
+        } else {
+            server_app
+        };
+        let server_app = if data.head.serves_sqls {
+            server_app
+                .service(runner::sql_run)
+                .service(runner::sql_ask)
+        } else {
+            server_app
+        };
         let server_app = if data.head.serves_lizs {
-            server_app.service(runner::run_liz)
+            server_app.service(runner::liz_run)
         } else {
             server_app
         };

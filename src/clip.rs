@@ -81,6 +81,14 @@ pub fn parse() -> ArgMatches {
         .help("Should we serve commands?"),
     )
     .arg(
+      Arg::new("regs")
+        .short('r')
+        .long("regs")
+        .takes_value(false)
+        .required(false)
+        .help("Should we serve register actions?"),
+    )
+    .arg(
       Arg::new("sqls")
         .short('s')
         .long("sqls")

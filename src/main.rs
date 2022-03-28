@@ -61,6 +61,11 @@ async fn main() -> std::io::Result<()> {
     } else {
         None
     };
+    let arg_regs = if args.is_present("regs") {
+        Some(true)
+    } else {
+        None
+    };
     let arg_sqls = if args.is_present("sqls") {
         Some(true)
     } else {
@@ -81,6 +86,7 @@ async fn main() -> std::io::Result<()> {
         serves_apps: arg_apps,
         serves_dirs: arg_dirs,
         serves_cmds: arg_cmds,
+        serves_regs: arg_regs,
         serves_sqls: arg_sqls,
         serves_lizs: arg_lizs,
         redirects: None,
