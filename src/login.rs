@@ -2,32 +2,11 @@ use actix_web::error::ErrorForbidden;
 use actix_web::{post, web::Json, HttpResponse};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
-use serde::{Deserialize, Serialize};
 
+use crate::auth::{Authed, User};
+use crate::comm::{Logged, TryAuth};
 use crate::SrvData;
 use crate::SrvResult;
-use crate::data::User;
-
-use std::time::SystemTime;
-
-#[derive(Debug)]
-pub struct Auth {
-    pub user: String,
-    pub from: SystemTime,
-}
-
-#[derive(Deserialize)]
-pub struct TryAuth {
-    pub name: String,
-    pub pass: String,
-}
-
-
-#[derive(Serialize, Deserialize)]
-struct Logged {
-    pub lang: String,
-    pub token: String,
-}
 
 #[post("/enter")]
 pub async fn enter(auth: Json<TryAuth>, srv_data: SrvData) -> SrvResult {
@@ -43,11 +22,11 @@ pub async fn enter(auth: Json<TryAuth>, srv_data: SrvData) -> SrvResult {
     }
     if let Some(user) = user_found {
         let token = generate_token();
-        let result = Logged{
+        let result = Logged {
             lang: user.lang.clone(),
             token: token.clone(),
         };
-        let auth = Auth {
+        let auth = Authed {
             user: auth.name.clone(),
             from: std::time::SystemTime::now(),
         };

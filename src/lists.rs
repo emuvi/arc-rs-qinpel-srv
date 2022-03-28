@@ -3,7 +3,7 @@ use actix_web::{HttpRequest, HttpResponse};
 use std::path::Path;
 
 use crate::bad_srv;
-use crate::data::Access;
+use crate::auth::Access;
 use crate::guard;
 use crate::SrvData;
 use crate::SrvError;
@@ -87,7 +87,7 @@ pub fn list_bases(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
 	let mut body = String::new();
 	for user_access in &user.access {
 		match user_access {
-			Access::DBS { name } => {
+			Access::BAS { name } => {
 				body.push_str(name);
 				body.push_str("\n");
 			}

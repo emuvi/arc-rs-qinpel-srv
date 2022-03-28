@@ -5,37 +5,37 @@ use liz::{liz_codes, liz_forms, liz_texts};
 use liz::{liz_dbg_bleb, liz_dbg_errs};
 use once_cell::sync::Lazy;
 
-use crate::data::DBS;
-use crate::runner::PathParams;
+use crate::base::Base;
+use crate::comm::PathParams;
 use crate::SrvData;
 use crate::SrvError;
 use crate::SrvResult;
 
-pub async fn sql_run(bas_name: &str, path_params: &PathParams, srv_data: &SrvData) -> SrvResult {
-    let base = get_base(bas_name, srv_data)?;
+pub async fn sql_run(base_name: &str, path_params: &PathParams, srv_data: &SrvData) -> SrvResult {
+    let base = get_base(base_name, srv_data)?;
     let source = get_source(path_params)?;
     let result = srv_data.pooling.run(base, &source).await;
     if let Err(err) = result {
-        return Err(ErrorInternalServerError(liz_dbg_errs!(err, bas_name)));
+        return Err(ErrorInternalServerError(liz_dbg_errs!(err, base_name)));
     }
     let result = result.unwrap();
     Ok(HttpResponse::Ok().body(format!("Affected: {}", result)))
 }
 
-pub async fn sql_ask(bas_name: &str, path_params: &PathParams, srv_data: &SrvData) -> SrvResult {
-    let base = get_base(bas_name, srv_data)?;
+pub async fn sql_ask(base_name: &str, path_params: &PathParams, srv_data: &SrvData) -> SrvResult {
+    let base = get_base(base_name, srv_data)?;
     let source = get_source(path_params)?;
     let result = srv_data.pooling.ask(base, &source).await;
     if let Err(err) = result {
         return Err(ErrorInternalServerError(liz_dbg_errs!(
-            err, bas_name, source
+            err, base_name, source
         )));
     }
     let result = result.unwrap();
     Ok(HttpResponse::Ok().body(result))
 }
 
-fn get_base<'a>(base_name: &str, srv_data: &'a SrvData) -> Result<&'a DBS, SrvError> {
+fn get_base<'a>(base_name: &str, srv_data: &'a SrvData) -> Result<&'a Base, SrvError> {
     for base in &srv_data.bases {
         if base.name == base_name {
             return Ok(base);

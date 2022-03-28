@@ -2,9 +2,9 @@ use actix_files::NamedFile;
 use actix_web::error::{Error, ErrorBadRequest};
 use actix_web::{get, post, web::Json, HttpRequest};
 use liz::{liz_dbg_call, liz_dbg_errs, liz_dbg_reav, liz_dbg_step, liz_paths};
-use serde::Deserialize;
 
 use crate::bad_req;
+use crate::comm::{ArgsInputs, PathParams};
 use crate::guard;
 use crate::lists;
 use crate::persist;
@@ -13,7 +13,7 @@ use crate::SrvData;
 use crate::SrvResult;
 
 #[get("/pub/*")]
-pub async fn get_pub(req: HttpRequest, srv_data: SrvData) -> Result<NamedFile, Error> {
+pub async fn pub_get(req: HttpRequest, srv_data: SrvData) -> Result<NamedFile, Error> {
     liz_dbg_call!(req, srv_data);
     let srv_dir = &srv_data.srv_dir;
     liz_dbg_step!(srv_dir);
@@ -25,7 +25,7 @@ pub async fn get_pub(req: HttpRequest, srv_data: SrvData) -> Result<NamedFile, E
 }
 
 #[get("/app/*")]
-pub async fn get_app(req: HttpRequest, srv_data: SrvData) -> Result<NamedFile, Error> {
+pub async fn app_get(req: HttpRequest, srv_data: SrvData) -> Result<NamedFile, Error> {
     liz_dbg_call!(req, srv_data);
     let path = req.match_info().path();
     liz_dbg_step!(path);
@@ -55,7 +55,7 @@ pub async fn list_apps(req: HttpRequest, srv_data: SrvData) -> SrvResult {
 }
 
 #[post("/cmd/*")]
-pub async fn run_cmd(
+pub async fn cmd_run(
     req: HttpRequest,
     args_inputs: Json<ArgsInputs>,
     srv_data: SrvData,
@@ -72,7 +72,12 @@ pub async fn run_cmd(
         .map_err(|err| bad_req(err))?;
     liz_dbg_step!(cmd_name);
     guard::check_cmd_access(cmd_name, user)?;
-    liz_dbg_reav!(precept::run_cmd(cmd_name, &args_inputs, &user, &srv_data.srv_dir))
+    liz_dbg_reav!(precept::cmd_run(
+        cmd_name,
+        &args_inputs,
+        &user,
+        &srv_data.srv_dir
+    ))
 }
 
 #[get("/list/cmds")]
@@ -216,16 +221,4 @@ pub async fn liz_run(
     liz_dbg_step!(user);
     guard::check_liz_access(&path_params.path, &user)?;
     liz_dbg_reav!(precept::liz_run(&path_params));
-}
-
-#[derive(Debug, Deserialize)]
-pub struct ArgsInputs {
-    pub args: Option<Vec<String>>,
-    pub inputs: Option<Vec<String>>,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct PathParams {
-    pub path: String,
-    pub params: Option<Vec<String>>,
 }

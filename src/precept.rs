@@ -8,10 +8,9 @@ use std::path::Path;
 use std::process::{Command, Stdio};
 use std::time::Duration;
 
-use crate::data::Access;
-use crate::data::User;
+use crate::auth::{Access, User};
+use crate::comm::{ArgsInputs, PathParams};
 use crate::guard;
-use crate::runner::{ArgsInputs, PathParams};
 use crate::SrvData;
 use crate::SrvResult;
 
@@ -53,7 +52,7 @@ pub fn stop(req: &HttpRequest, srv_data: &SrvData) -> SrvResult {
     ))
 }
 
-pub fn run_cmd(
+pub fn cmd_run(
     cmd_name: &str,
     args_inputs: &ArgsInputs,
     user: &User,

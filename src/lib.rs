@@ -15,7 +15,10 @@ use std::io::BufReader;
 use std::path::Path;
 use std::sync::Arc;
 
-mod data;
+mod auth;
+mod base;
+mod body;
+mod comm;
 mod dirs;
 mod files;
 mod guard;
@@ -29,7 +32,7 @@ mod server;
 mod servfs;
 mod setup;
 
-type SrvData = web::Data<Arc<data::Body>>;
+type SrvData = web::Data<Arc<body::Body>>;
 type SrvError = actix_web::error::Error;
 type SrvResult = Result<HttpResponse, SrvError>;
 
@@ -52,7 +55,7 @@ pub struct QinServer {
 pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
     let setup = setup::Head::load(qin_server);
     let server_address = format!("{}:{}", setup.server_host, setup.server_port);
-    let body = data::Body::new(setup);
+    let body = body::Body::new(setup);
     if body.head.verbose {
         println!("{} starting...", body.head.server_name);
         println!("Server head: {:?}", body.head);
@@ -89,13 +92,13 @@ pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
             .service(server::version)
             .service(login::enter);
         let server_app = if data.head.serves_pubs {
-            server_app.service(runner::get_pub)
+            server_app.service(runner::pub_get)
         } else {
             server_app
         };
         let server_app = if data.head.serves_apps {
             server_app
-                .service(runner::get_app)
+                .service(runner::app_get)
                 .service(runner::list_apps)
         } else {
             server_app
@@ -118,12 +121,12 @@ pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
         };
         let server_app = if data.head.serves_cmds {
             server_app
-                .service(runner::run_cmd)
+                .service(runner::cmd_run)
                 .service(runner::list_cmds)
         } else {
             server_app
         };
-        let server_app = if true  {
+        let server_app = if data.head.serves_base()  {
             server_app
                 .service(runner::list_bases)
         } else {

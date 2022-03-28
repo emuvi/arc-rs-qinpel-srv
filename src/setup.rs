@@ -209,4 +209,9 @@ impl Head {
             redirects: setup_redirects,
         }
     }
+
+    pub fn serves_base(&self) -> bool {
+        self.serves_regs || self.serves_sqls
+    }
+
 }

@@ -1,6 +1,5 @@
 use actix_web::dev::Server;
 use liz::{liz_dbg_errs, liz_paths};
-use serde::{Deserialize, Serialize};
 use serde_json;
 
 use std::collections::HashMap;
@@ -9,7 +8,8 @@ use std::path::Path;
 use std::sync::RwLock;
 use std::time::SystemTime;
 
-use crate::login::Auth;
+use crate::auth::{Authed, User, Users};
+use crate::base::{Base, Bases};
 use crate::pooling::Pool;
 use crate::setup::Head;
 
@@ -21,72 +21,8 @@ pub struct Body {
     pub pooling: Pool,
     pub srv_dir: String,
     pub server: RwLock<Option<Server>>,
-    pub tokens: RwLock<HashMap<String, Auth>>,
+    pub tokens: RwLock<HashMap<String, Authed>>,
     pub last_clean: SystemTime,
-}
-
-pub type Users = Vec<User>;
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct User {
-    pub name: String,
-    pub pass: String,
-    pub home: String,
-    pub lang: String,
-    pub master: bool,
-    pub access: Vec<Access>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum Access {
-    APP {
-        name: String,
-    },
-    DIR {
-        path: String,
-        can_write: bool,
-    },
-    CMD {
-        name: String,
-        args: Option<Vec<String>>,
-    },
-    DBS {
-        name: String,
-    },
-    REG {
-        name: String,
-    },
-    SQL {
-        path: String,
-    },
-    LIZ {
-        path: String,
-    },
-}
-
-pub type Bases = Vec<DBS>;
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct DBS {
-    pub name: String,
-    pub info: String,
-}
-
-impl DBS {
-    pub fn get_default_base_name(for_user: &User) -> String {
-        format!("{}_default_dbs", for_user.name)
-    }
-
-    pub fn get_default_dbs_info(for_user: &User) -> String {
-        let default_dbs_file = "default_dbs.sdb";
-        let default_dbs_path =
-            liz_paths::path_join(&for_user.home, default_dbs_file).expect(&liz_dbg_errs!(
-                "Could not join the user home with default sql",
-                &for_user.home,
-                &default_dbs_file
-            ));
-        format!("sqlite://{}", default_dbs_path)
-    }
 }
 
 impl Body {
@@ -158,12 +94,12 @@ impl Body {
             Bases::new()
         };
         for user in users {
-            let default_bas_name = DBS::get_default_base_name(user);
-            let has_default_dbs = &bases.iter().any(|base| &base.name == &default_bas_name);
+            let default_base_name = Base::get_default_base_name(user);
+            let has_default_dbs = &bases.iter().any(|base| &base.name == &default_base_name);
             if !has_default_dbs {
-                let default_dbs = DBS {
-                    name: default_bas_name,
-                    info: DBS::get_default_dbs_info(user),
+                let default_dbs = Base {
+                    name: default_base_name,
+                    link: Base::get_default_base_link(user),
                 };
                 bases.push(default_dbs);
             }

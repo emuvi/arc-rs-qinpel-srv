@@ -7,7 +7,7 @@ use sqlx::Row;
 use std::collections::HashMap;
 use std::sync::RwLock;
 
-use super::data::DBS;
+use crate::base::Base;
 
 #[derive(Debug)]
 pub struct Pool {
@@ -21,8 +21,8 @@ impl Pool {
         }
     }
 
-    pub async fn run(&self, base: &DBS, sql_source: &str) -> Result<u64, sqlx::Error> {
-        self.check_new(base)?;
+    pub async fn run(&self, base: &Base, sql_source: &str) -> Result<u64, sqlx::Error> {
+        self.startup(base)?;
         let map_read = self.map.read().unwrap();
         let pool = map_read.get(&base.name).unwrap();
         let mut link = pool.acquire().await?; 
@@ -30,8 +30,8 @@ impl Pool {
         Ok(result.rows_affected())
     }
 
-    pub async fn ask(&self, base: &DBS, sql_source: &str) -> Result<String, sqlx::Error> {
-        self.check_new(base)?;
+    pub async fn ask(&self, base: &Base, sql_source: &str) -> Result<String, sqlx::Error> {
+        self.startup(base)?;
         let map_read = self.map.read().unwrap();
         let pool = map_read.get(&base.name).unwrap();
         let mut link = pool.acquire().await?;
@@ -51,7 +51,7 @@ impl Pool {
         Ok(body)
     }
 
-    fn check_new(&self, base: &DBS) -> Result<(), sqlx::Error> {
+    fn startup(&self, base: &Base) -> Result<(), sqlx::Error> {
         let need_new = {
             let map_read = self.map.read().unwrap();
             !map_read.contains_key(&base.name)
@@ -59,7 +59,7 @@ impl Pool {
         if need_new {
             let new_pool = AnyPoolOptions::new()
                 .max_connections(12)
-                .connect_lazy(&base.info)?;
+                .connect_lazy(&base.link)?;
             let mut map_write = self.map.write().unwrap();
             map_write.insert(String::from(&base.name), new_pool);
         }
