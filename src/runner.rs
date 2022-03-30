@@ -2,15 +2,27 @@ use actix_files::NamedFile;
 use actix_web::error::{Error, ErrorBadRequest};
 use actix_web::{get, post, web::Json, HttpRequest};
 use liz::{liz_dbg_call, liz_dbg_errs, liz_dbg_reav, liz_dbg_step, liz_paths};
+use serde::Deserialize;
 
 use crate::bad_req;
-use crate::comm::{ArgsInputs, PathParams};
 use crate::guard;
 use crate::lists;
 use crate::persist;
 use crate::precept;
 use crate::SrvData;
 use crate::SrvResult;
+
+#[derive(Debug, Deserialize)]
+pub struct ArgsInputs {
+    pub args: Option<Vec<String>>,
+    pub inputs: Option<Vec<String>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct PathParams {
+    pub path: String,
+    pub params: Option<Vec<String>>,
+}
 
 #[get("/pub/*")]
 pub async fn pub_get(req: HttpRequest, srv_data: SrvData) -> Result<NamedFile, Error> {

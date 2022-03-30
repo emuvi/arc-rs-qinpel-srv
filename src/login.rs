@@ -2,11 +2,23 @@ use actix_web::error::ErrorForbidden;
 use actix_web::{post, web::Json, HttpResponse};
 use rand::distributions::Alphanumeric;
 use rand::{thread_rng, Rng};
+use serde::{Deserialize, Serialize};
 
 use crate::auth::{Authed, User};
-use crate::comm::{Logged, TryAuth};
 use crate::SrvData;
 use crate::SrvResult;
+
+#[derive(Deserialize)]
+pub struct TryAuth {
+    pub name: String,
+    pub pass: String,
+}
+
+#[derive(Serialize)]
+pub struct Logged {
+    pub lang: String,
+    pub token: String,
+}
 
 #[post("/enter")]
 pub async fn enter(auth: Json<TryAuth>, srv_data: SrvData) -> SrvResult {

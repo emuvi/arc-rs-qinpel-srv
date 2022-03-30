@@ -18,7 +18,6 @@ use std::sync::Arc;
 mod auth;
 mod base;
 mod body;
-mod comm;
 mod dirs;
 mod files;
 mod guard;

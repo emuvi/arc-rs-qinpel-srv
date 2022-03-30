@@ -4,11 +4,11 @@ use actix_web::{post, web::Json, HttpRequest};
 use liz::{liz_dbg_errs, liz_paths};
 use serde::Deserialize;
 
-use super::dirs;
-use super::files;
-use super::guard;
-use super::SrvData;
-use super::SrvResult;
+use crate::dirs;
+use crate::files;
+use crate::guard;
+use crate::SrvData;
+use crate::SrvResult;
 
 #[derive(Deserialize)]
 pub struct OnePath {
@@ -84,7 +84,11 @@ pub async fn dir_copy(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) -
     let destiny = match liz_paths::path_join_if_relative(&user.home, &two.destiny) {
         Ok(path) => path,
         Err(err) => {
-            return Err(ErrorBadRequest(liz_dbg_errs!(err, &user.home, &two.destiny)));
+            return Err(ErrorBadRequest(liz_dbg_errs!(
+                err,
+                &user.home,
+                &two.destiny
+            )));
         }
     };
     guard::check_dir_access(&origin, Some(&destiny), "/dir/copy", &user)?;
@@ -109,7 +113,11 @@ pub async fn dir_move(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) -
     let destiny = match liz_paths::path_join_if_relative(&user.home, &two.destiny) {
         Ok(path) => path,
         Err(err) => {
-            return Err(ErrorBadRequest(liz_dbg_errs!(err, &user.home, &two.destiny)));
+            return Err(ErrorBadRequest(liz_dbg_errs!(
+                err,
+                &user.home,
+                &two.destiny
+            )));
         }
     };
     guard::check_dir_access(&origin, Some(&destiny), "/dir/move", &user)?;
@@ -214,7 +222,11 @@ pub async fn file_copy(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) 
     let destiny = match liz_paths::path_join_if_relative(&user.home, &two.destiny) {
         Ok(path) => path,
         Err(err) => {
-            return Err(ErrorBadRequest(liz_dbg_errs!(err, &user.home, &two.destiny)));
+            return Err(ErrorBadRequest(liz_dbg_errs!(
+                err,
+                &user.home,
+                &two.destiny
+            )));
         }
     };
     guard::check_dir_access(&origin, Some(&destiny), "/file/copy", &user)?;
@@ -239,7 +251,11 @@ pub async fn file_move(two: Json<TwoPath>, req: HttpRequest, srv_data: SrvData) 
     let destiny = match liz_paths::path_join_if_relative(&user.home, &two.destiny) {
         Ok(path) => path,
         Err(err) => {
-            return Err(ErrorBadRequest(liz_dbg_errs!(err, &user.home, &two.destiny)));
+            return Err(ErrorBadRequest(liz_dbg_errs!(
+                err,
+                &user.home,
+                &two.destiny
+            )));
         }
     };
     guard::check_dir_access(&origin, Some(&destiny), "/file/move", &user)?;

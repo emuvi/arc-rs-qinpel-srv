@@ -52,8 +52,8 @@ impl Body {
     fn init_users(working_dir: &str) -> Users {
         let users_path = Path::new("users.json");
         let mut users = if users_path.exists() {
-            serde_json::from_reader(File::open(users_path).expect("Could not open the users file."))
-                .expect("Could not parse the users file.")
+            let users_file = File::open(users_path).expect("Could not open the users file.");
+            serde_json::from_reader(users_file).expect("Could not parse the users file.")
         } else {
             Users::new()
         };
@@ -61,7 +61,7 @@ impl Body {
         if !has_root {
             let user = User {
                 name: String::from("root"),
-                pass: String::new(),
+                pass: String::new("r00!"),
                 home: String::from("./dir/root"),
                 lang: String::new(),
                 master: true,
@@ -75,7 +75,7 @@ impl Body {
             }
             user.home =
                 liz_paths::path_join_if_relative(working_dir, &user.home).expect(&liz_dbg_errs!(
-                    "Could not join the working dir with the home",
+                    "Could not join the working dir with the user home",
                     working_dir,
                     user.home
                 ));

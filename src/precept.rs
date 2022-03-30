@@ -9,8 +9,8 @@ use std::process::{Command, Stdio};
 use std::time::Duration;
 
 use crate::auth::{Access, User};
-use crate::comm::{ArgsInputs, PathParams};
 use crate::guard;
+use crate::runner::{ArgsInputs, PathParams};
 use crate::SrvData;
 use crate::SrvResult;
 
