@@ -10,8 +10,8 @@ use std::time::SystemTime;
 
 use crate::auth::{Authed, User, Users};
 use crate::base::{Base, Bases};
+use crate::conf::Head;
 use crate::pooling::Pool;
-use crate::setup::Head;
 
 #[derive(Debug)]
 pub struct Body {

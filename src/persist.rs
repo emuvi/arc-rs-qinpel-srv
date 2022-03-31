@@ -6,7 +6,7 @@ use liz::{liz_dbg_bleb, liz_dbg_errs};
 use once_cell::sync::Lazy;
 
 use crate::base::Base;
-use crate::runner::PathParams;
+use crate::srvruns::PathParams;
 use crate::SrvData;
 use crate::SrvError;
 use crate::SrvResult;

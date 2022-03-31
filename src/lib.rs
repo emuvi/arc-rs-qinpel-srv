@@ -18,18 +18,19 @@ use std::sync::Arc;
 mod auth;
 mod base;
 mod body;
+mod conf;
 mod dirs;
 mod files;
 mod guard;
 mod lists;
-mod login;
 mod persist;
 mod pooling;
 mod precept;
-mod runner;
-mod server;
-mod servfs;
-mod setup;
+mod srvauth;
+mod srvbase;
+mod srvdirs;
+mod srvruns;
+mod srvutil;
 
 type SrvData = web::Data<Arc<body::Body>>;
 type SrvError = actix_web::error::Error;
@@ -52,7 +53,7 @@ pub struct QinServer {
 }
 
 pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
-    let setup = setup::Head::load(qin_server);
+    let setup = conf::Head::load(qin_server);
     let server_address = format!("{}:{}", setup.server_host, setup.server_port);
     let body = body::Body::new(setup);
     if body.head.verbose {
@@ -85,74 +86,75 @@ pub async fn start(qin_server: QinServer) -> std::io::Result<()> {
                 )
                 .into()
             }))
-            .service(server::ping)
-            .service(server::stop)
-            .service(server::shut)
-            .service(server::version)
-            .service(login::enter);
+            .service(srvauth::enter)
+            .service(srvauth::exit);
         let server_app = if data.head.serves_pubs {
-            server_app.service(runner::pub_get)
+            server_app.service(srvruns::pub_get)
         } else {
             server_app
         };
         let server_app = if data.head.serves_apps {
             server_app
-                .service(runner::app_get)
-                .service(runner::list_apps)
+                .service(srvruns::app_get)
+                .service(srvruns::list_apps)
         } else {
             server_app
         };
         let server_app = if data.head.serves_dirs {
             server_app
-                .service(servfs::dir_list)
-                .service(servfs::dir_new)
-                .service(servfs::dir_copy)
-                .service(servfs::dir_move)
-                .service(servfs::dir_del)
-                .service(servfs::file_read)
-                .service(servfs::file_write)
-                .service(servfs::file_append)
-                .service(servfs::file_copy)
-                .service(servfs::file_move)
-                .service(servfs::file_del)
+                .service(srvdirs::dir_list)
+                .service(srvdirs::dir_new)
+                .service(srvdirs::dir_copy)
+                .service(srvdirs::dir_move)
+                .service(srvdirs::dir_del)
+                .service(srvdirs::file_read)
+                .service(srvdirs::file_write)
+                .service(srvdirs::file_append)
+                .service(srvdirs::file_copy)
+                .service(srvdirs::file_move)
+                .service(srvdirs::file_del)
         } else {
             server_app
         };
         let server_app = if data.head.serves_cmds {
             server_app
-                .service(runner::cmd_run)
-                .service(runner::list_cmds)
+                .service(srvruns::cmd_run)
+                .service(srvruns::list_cmds)
         } else {
             server_app
         };
-        let server_app = if data.head.serves_base()  {
-            server_app
-                .service(runner::list_bases)
+        let server_app = if data.head.serves_base() {
+            server_app.service(srvbase::list_bases)
         } else {
             server_app
         };
         let server_app = if data.head.serves_regs {
             server_app
-                .service(runner::reg_new)
-                .service(runner::reg_ask)
-                .service(runner::reg_set)
-                .service(runner::reg_del)
+                .service(srvbase::reg_new)
+                .service(srvbase::reg_ask)
+                .service(srvbase::reg_set)
+                .service(srvbase::reg_del)
         } else {
             server_app
         };
         let server_app = if data.head.serves_sqls {
             server_app
-                .service(runner::sql_run)
-                .service(runner::sql_ask)
+                .service(srvbase::sql_run)
+                .service(srvbase::sql_ask)
         } else {
             server_app
         };
         let server_app = if data.head.serves_lizs {
-            server_app.service(runner::liz_run)
+            server_app.service(srvruns::liz_run)
         } else {
             server_app
         };
-        server_app.service(server::redirect)
+        server_app
+            .service(srvutil::ping)
+            .service(srvutil::version)
+            .service(srvutil::stop)
+            .service(srvutil::shut)
+            .service(srvutil::redirect)
     });
     let secure = secure_server();
     let runner = if let Some(config) = secure {

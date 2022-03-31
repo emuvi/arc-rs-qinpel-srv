@@ -11,6 +11,11 @@ pub async fn ping() -> HttpResponse {
     HttpResponse::Ok().body("pong")
 }
 
+#[get("/version")]
+async fn version() -> HttpResponse {
+    HttpResponse::Ok().body(format!("v{}", env!("CARGO_PKG_VERSION")))
+}
+
 #[get("/stop")]
 pub async fn stop(req: HttpRequest, srv_data: SrvData) -> SrvResult {
     precept::stop(&req, &srv_data)
@@ -19,11 +24,6 @@ pub async fn stop(req: HttpRequest, srv_data: SrvData) -> SrvResult {
 #[get("/shut")]
 pub async fn shut(req: HttpRequest, srv_data: SrvData) -> SrvResult {
     precept::shut(&req, &srv_data)
-}
-
-#[get("/version")]
-async fn version() -> HttpResponse {
-    HttpResponse::Ok().body(format!("{}{}", "v", env!("CARGO_PKG_VERSION")))
 }
 
 #[get("*")]
